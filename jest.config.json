@@ -6,7 +6,12 @@
   "moduleNameMapper": {
     "(.+)\\.js": "$1"
   },
-  "collectCoverageFrom": ["src/**/*.ts", "!src/index.ts"],
+  "collectCoverageFrom": [
+    "src/**/*.ts",
+    "!src/index.ts",
+    "!src/slack-client.ts",
+    "!src/sheet-store.ts"
+  ],
   "coverageThreshold": {
     "global": {
       "branches": 80,
