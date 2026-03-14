@@ -13,16 +13,46 @@ import {
 } from "./sheet-store.js";
 import { DEFAULT_EXCLUDE_PATTERNS } from "./config.js";
 
-function getNotifyChannel(): string {
-  return (
-    PropertiesService.getScriptProperties().getProperty("NOTIFY_CHANNEL") ??
-    "#general"
-  );
+function getNotifyChannelId(): string {
+  const id =
+    PropertiesService.getScriptProperties().getProperty("NOTIFY_CHANNEL_ID");
+  if (id === null) {
+    throw new Error("NOTIFY_CHANNEL_ID is not set in Script Properties");
+  }
+  return id;
+}
+
+function initSpreadsheet(): void {
+  const id =
+    PropertiesService.getScriptProperties().getProperty("SPREADSHEET_ID");
+  if (id === null) {
+    throw new Error("SPREADSHEET_ID is not set in Script Properties");
+  }
+  const ss = SpreadsheetApp.openById(id);
+
+  const sheetNames = ["channels", "archive_warnings", "exclude_channels"];
+  for (const name of sheetNames) {
+    if (ss.getSheetByName(name) === null) {
+      ss.insertSheet(name);
+    }
+  }
+
+  const excludeSheet = ss.getSheetByName("exclude_channels")!;
+  if (excludeSheet.getLastRow() === 0) {
+    excludeSheet.getRange(1, 1).setValue("channel_name");
+  }
+
+  const defaultSheet = ss.getSheetByName("Sheet1");
+  if (defaultSheet !== null) {
+    ss.deleteSheet(defaultSheet);
+  }
+
+  Logger.log("Spreadsheet initialized: " + ss.getUrl());
 }
 
 function runDaily(): void {
   const now = new Date();
-  const notifyChannel = getNotifyChannel();
+  const notifyChannelId = getNotifyChannelId();
 
   const channels = fetchAllChannels();
   saveChannelSnapshot(channels);
@@ -44,11 +74,11 @@ function runDaily(): void {
 
   const warningMessage = buildWarningMessage(newWarnings);
   if (warningMessage !== "") {
-    postMessage(notifyChannel, warningMessage);
+    postMessage(notifyChannelId, warningMessage);
   }
 
   const archiveReport = buildArchiveReport(archiveCandidates);
   if (archiveReport !== "") {
-    postMessage(notifyChannel, archiveReport);
+    postMessage(notifyChannelId, archiveReport);
   }
 }

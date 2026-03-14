@@ -9,17 +9,32 @@ function getToken(): string {
   return token;
 }
 
-function slackApi<T>(endpoint: string, params: Record<string, string> = {}): T {
+function slackApi<T>(
+  endpoint: string,
+  params: Record<string, string> = {},
+  method: "get" | "post" = "get",
+): T {
   const token = getToken();
-  const query = Object.entries(params)
-    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
-    .join("&");
-  const url = `https://slack.com/api/${endpoint}${query ? `?${query}` : ""}`;
 
-  const response = UrlFetchApp.fetch(url, {
+  const fetchOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     headers: { Authorization: `Bearer ${token}` },
     muteHttpExceptions: true,
-  });
+  };
+
+  let url: string;
+  if (method === "post") {
+    url = `https://slack.com/api/${endpoint}`;
+    fetchOptions.method = "post";
+    fetchOptions.contentType = "application/json";
+    fetchOptions.payload = JSON.stringify(params);
+  } else {
+    const query = Object.entries(params)
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .join("&");
+    url = `https://slack.com/api/${endpoint}${query ? `?${query}` : ""}`;
+  }
+
+  const response = UrlFetchApp.fetch(url, fetchOptions);
 
   const json = JSON.parse(response.getContentText()) as {
     ok: boolean;
@@ -77,6 +92,10 @@ export function fetchAllChannels(): readonly SlackChannel[] {
         continue;
       }
 
+      if (!ch.is_private) {
+        joinChannel(ch.id);
+      }
+
       const lastActivityTs = getLastActivityTs(ch.id);
 
       allChannels.push({
@@ -94,6 +113,14 @@ export function fetchAllChannels(): readonly SlackChannel[] {
   } while (cursor !== "");
 
   return allChannels;
+}
+
+function joinChannel(channelId: string): void {
+  try {
+    slackApi("conversations.join", { channel: channelId }, "post");
+  } catch {
+    // Already a member or cannot join — safe to ignore
+  }
 }
 
 function getLastActivityTs(channelId: string): number {
@@ -115,7 +142,7 @@ function getLastActivityTs(channelId: string): number {
 }
 
 export function archiveChannel(channelId: string): void {
-  slackApi("conversations.archive", { channel: channelId });
+  slackApi("conversations.archive", { channel: channelId }, "post");
 }
 
 export function postMessage(channel: string, text: string): void {
