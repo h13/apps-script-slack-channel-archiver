@@ -34,7 +34,7 @@
 
 ```
 src/
-├── index.ts            # GAS エントリポイント: runDaily()
+├── index.ts            # GAS エントリポイント: archiveInactiveChannels()
 ├── config.ts           # 型定義 & 定数（WARNING=95日, GRACE=5日）
 ├── channel-service.ts  # チャンネル分類ロジック（純粋関数）
 ├── notifier.ts         # Slack 通知メッセージ組み立て（純粋関数）
@@ -57,9 +57,10 @@ test/
 | `groups:read` | private チャンネル一覧取得 |
 | `channels:history` | 最終投稿日取得（public） |
 | `groups:history` | 最終投稿日取得（private） |
+| `channels:join` | public チャンネルへの自動参加 |
 | `channels:manage` | public チャンネルのアーカイブ |
 | `groups:write` | private チャンネルのアーカイブ |
-| `chat:write` | 通知投稿 |
+| `chat:write.public` | 通知投稿 |
 
 ### 2. Google スプレッドシートの作成
 
@@ -71,11 +72,11 @@ test/
 |------------|------|
 | `SLACK_BOT_TOKEN` | Bot User OAuth Token (`xoxb-...`) |
 | `SPREADSHEET_ID` | Google スプレッドシートの ID |
-| `NOTIFY_CHANNEL` | 通知先チャンネル（デフォルト: `#general`） |
+| `NOTIFY_CHANNEL_ID` | 通知先チャンネル ID（`C01234567` 形式） |
 
 ### 4. 時間トリガーの設定
 
-Apps Script エディタ: トリガー → トリガーを追加 → `runDaily` → 時間主導型 → 日付ベースのタイマー。
+Apps Script エディタ: トリガー → トリガーを追加 → `archiveInactiveChannels` → 時間主導型 → 日付ベースのタイマー。
 
 ## 開発
 

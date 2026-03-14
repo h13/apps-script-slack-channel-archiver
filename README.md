@@ -34,7 +34,7 @@ Daily trigger → Fetch all channels (public + private)
 
 ```
 src/
-├── index.ts            # GAS entry point: runDaily()
+├── index.ts            # GAS entry point: archiveInactiveChannels()
 ├── config.ts           # Types & constants (WARNING=95d, GRACE=5d)
 ├── channel-service.ts  # Channel classification logic (pure functions)
 ├── notifier.ts         # Slack notification message builder (pure functions)
@@ -57,9 +57,10 @@ Required scopes:
 | `groups:read` | List private channels |
 | `channels:history` | Read last message timestamp (public) |
 | `groups:history` | Read last message timestamp (private) |
+| `channels:join` | Auto-join public channels |
 | `channels:manage` | Archive public channels |
 | `groups:write` | Archive private channels |
-| `chat:write` | Post notifications |
+| `chat:write.public` | Post notifications |
 
 ### 2. Create a Google Spreadsheet
 
@@ -71,11 +72,11 @@ Add an `exclude_channels` sheet with channel names to skip (one per row, with a 
 |----------|-------|
 | `SLACK_BOT_TOKEN` | Bot User OAuth Token (`xoxb-...`) |
 | `SPREADSHEET_ID` | Google Spreadsheet ID |
-| `NOTIFY_CHANNEL` | Notification channel (default: `#general`) |
+| `NOTIFY_CHANNEL_ID` | Notification channel ID (`C01234567` format) |
 
 ### 4. Set Up a Time Trigger
 
-In the Apps Script editor: Triggers → Add Trigger → `runDaily` → Time-driven → Day timer.
+In the Apps Script editor: Triggers → Add Trigger → `archiveInactiveChannels` → Time-driven → Day timer.
 
 ## Development
 

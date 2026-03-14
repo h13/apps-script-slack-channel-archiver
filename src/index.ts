@@ -50,7 +50,7 @@ function initSpreadsheet(): void {
   Logger.log("Spreadsheet initialized: " + ss.getUrl());
 }
 
-function runDaily(): void {
+function archiveInactiveChannels(): void {
   const now = new Date();
   const notifyChannelId = getNotifyChannelId();
 
