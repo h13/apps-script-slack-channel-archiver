@@ -15,49 +15,35 @@ Built from [apps-script-fleet](https://github.com/h13/apps-script-fleet) templat
 ## How It Works
 
 ```
-Daily trigger → Fetch all channels (public + private)
-                    → Save snapshot to Spreadsheet
-                    → Classify channels:
-                        • 95+ days inactive → Add to warning list, notify Slack
-                        • On warning list 5+ days → Archive, notify Slack
-                        • Became active again → Remove from warning list
+Trigger → Fetch all channels (public + private)
+              → Auto-join public channels (Bot)
+              → Save snapshot to Spreadsheet
+              → Classify channels:
+                  • 95+ days inactive → Warning list + Slack notification
+                  • Warning 5+ days   → Archive + Slack notification
+                  • Became active     → Remove from warning list
 ```
 
-## GAS Projects
+## Apps Script Projects
 
 | Environment | Link |
 |-------------|------|
 | dev | [slack-channel-archiver-dev](https://script.google.com/d/1esjLNfXKGlfG6SLY1bibN6a39-cty4pKXyABycRJozDnK6JN8FXcP23o/edit) |
 | prod | [slack-channel-archiver-prod](https://script.google.com/d/19lVnm0g3_RTPd5CFsfwAkvqVGy1i3Qo3dJ3GEGdRkX4OQCZH9LAZhlcv/edit) |
 
-## Project Structure
-
-```
-src/
-├── index.ts            # GAS entry point: archiveInactiveChannels()
-├── config.ts           # Types & constants (WARNING=95d, GRACE=5d)
-├── channel-service.ts  # Channel classification logic (pure functions)
-├── notifier.ts         # Slack notification message builder (pure functions)
-├── slack-client.ts     # Slack API wrapper (UrlFetchApp)
-└── sheet-store.ts      # Spreadsheet read/write (SpreadsheetApp)
-test/
-├── channel-service.test.ts  # 15 test cases
-└── notifier.test.ts         # 6 test cases
-```
-
-## Setup
+## Quick Start
 
 ### 1. Create a Slack Bot
 
 Go to [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** → **From an app manifest** → paste [`slack-app-manifest.yml`](slack-app-manifest.yml) → Install to Workspace.
 
-### 2. Configure Script Properties
+### 2. Set Script Property
 
-In the Apps Script editor: Project Settings (gear icon) → Script Properties → add `SPREADSHEET_ID` (the only property still needed here).
+In the Apps Script editor: Project Settings (gear icon) → Script Properties → add `SPREADSHEET_ID`.
 
 ### 3. Initialize Spreadsheet
 
-Run `initSpreadsheet` in the Apps Script editor (▶). This creates the required sheets and a `settings` sheet with default values. First run requires OAuth authorization.
+Run `initSpreadsheet` in the Apps Script editor (▶). Creates the required sheets and a `settings` sheet with default values. First run requires OAuth authorization.
 
 ### 4. Fill in Settings
 
@@ -74,25 +60,54 @@ Open the Spreadsheet → `settings` sheet → fill in:
 
 ### 5. Set Up Trigger
 
-Run `setupTrigger` in the Apps Script editor (▶). It reads the schedule from the `settings` sheet. First run requires `script.scriptapp` scope authorization.
+Run `setupTrigger` in the Apps Script editor (▶). Reads the schedule from the `settings` sheet. First run requires `script.scriptapp` scope authorization.
+
+## Project Structure
+
+```
+src/
+├── index.ts            # GAS entry points (archiveInactiveChannels, setupTrigger, initSpreadsheet)
+├── config.ts           # Types, interfaces & default constants
+├── channel-service.ts  # Channel classification logic (pure functions)
+├── notifier.ts         # Slack notification message builder (pure functions)
+├── slack-client.ts     # Slack API wrapper (stateless, token passed as argument)
+└── sheet-store.ts      # Spreadsheet read/write + settings loader
+test/
+├── channel-service.test.ts
+└── notifier.test.ts
+```
 
 ## Development
 
-```bash
-pnpm install
-pnpm run check    # lint + typecheck + test
-pnpm run build    # bundle to dist/
-pnpm run deploy   # check → build → push to dev
-```
+| Command | Description |
+|---------|-------------|
+| `pnpm run check` | lint + typecheck + test (all checks) |
+| `pnpm run build` | Bundle TypeScript and output to `dist/` |
+| `pnpm run test` | Jest with coverage |
+| `pnpm run test -- --watch` | Jest watch mode |
+| `pnpm run deploy` | check → build → deploy to dev |
+| `pnpm run deploy:prod` | check → build → deploy to production |
+
+## CI/CD
+
+CI runs on every push and PR. CD deploys on merge to `dev` or `main` — configured via GitHub Actions secrets/variables per environment. See [apps-script-fleet docs](https://github.com/h13/apps-script-fleet#cicd-pipeline) for details.
 
 ## Differences from the Original Blog Post
 
 | Feature | Original | This Project |
 |---------|----------|-------------|
-| Private channels | Not supported | Supported (`conversations.list` with `types=public_channel,private_channel`) |
-| Reactivation detection | Not mentioned | Channels with new activity are removed from warning list |
-| Notification format | Basic | Private channels marked with :lock: icon |
-| State management | Spreadsheet | Spreadsheet (same pattern, extended schema) |
+| Private channels | Not supported | Supported via `conversations.list` with `types=public_channel,private_channel` |
+| Auto-join | Manual `/invite` | Bot auto-joins public channels via `conversations.join` |
+| Reactivation | Not mentioned | Channels with new activity are removed from warning list |
+| Notification | Basic | Private channels marked with :lock: icon |
+| Configuration | Hardcoded | Spreadsheet `settings` sheet (editable without code changes) |
+
+## Notes
+
+- Functions in `src/index.ts` must not have the `export` keyword — the GAS runtime does not support ES module syntax
+- `src/index.ts`, `src/slack-client.ts`, `src/sheet-store.ts` are excluded from test coverage (GAS globals cannot run in Node.js)
+- Coverage threshold: 80% for all metrics (configurable in `jest.config.json`)
+- `SPREADSHEET_ID` is the only value stored in Script Properties; all other settings live in the Spreadsheet `settings` sheet
 
 ## License
 
