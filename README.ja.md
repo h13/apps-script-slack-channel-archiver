@@ -8,7 +8,7 @@
 
 [English](README.md)
 
-**100日間非アクティブな Slack チャンネルを自動アーカイブ — private チャンネルにも対応。**
+**非アクティブな Slack チャンネルを自動アーカイブ — private チャンネルにも対応。** 閾値は設定可能（デフォルト: 95日で警告、5日の猶予後にアーカイブ）。
 
 [apps-script-fleet](https://github.com/h13/apps-script-fleet) テンプレートから生成。[100日後にアーカイブされるSlackチャネル](https://konifar.hatenablog.com/entry/2021/11/20/145833) にインスパイアされ、private チャンネル対応を追加。
 
@@ -19,8 +19,8 @@
               → Bot が public チャンネルに自動参加
               → スプレッドシートにスナップショット保存
               → チャンネル分類:
-                  • 95日以上非アクティブ → 警告リスト + Slack 通知
-                  • 警告から5日以上経過   → アーカイブ + Slack 通知
+                  • 非アクティブ ≥ WARNING_THRESHOLD_DAYS → 警告リスト + Slack 通知
+                  • 警告 ≥ GRACE_PERIOD_DAYS            → アーカイブ + Slack 通知
                   • 再びアクティブに       → 警告リストから除去
 ```
 
@@ -67,7 +67,7 @@ Apps Script エディタで `setupTrigger` を選択して ▶ 実行。`setting
 ```
 src/
 ├── index.ts            # GAS エントリポイント（archiveInactiveChannels, setupTrigger, initSpreadsheet）
-├── config.ts           # 型定義・インターフェース・デフォルト定数
+├── config.ts           # 型定義・インターフェース・デフォルト定数（WARNING=95日, GRACE=5日）
 ├── channel-service.ts  # チャンネル分類ロジック（純粋関数）
 ├── notifier.ts         # Slack 通知メッセージ組み立て（純粋関数）
 ├── slack-client.ts     # Slack API ラッパー（ステートレス、token は引数で受け取り）

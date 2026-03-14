@@ -8,7 +8,7 @@
 
 [日本語](README.ja.md)
 
-**Auto-archive Slack channels inactive for 100 days — including private channels.**
+**Auto-archive inactive Slack channels — including private channels.** Configurable thresholds (default: 95-day warning + 5-day grace period).
 
 Built from [apps-script-fleet](https://github.com/h13/apps-script-fleet) template. Inspired by [100日後にアーカイブされるSlackチャネル](https://konifar.hatenablog.com/entry/2021/11/20/145833), extended with private channel support.
 
@@ -19,8 +19,8 @@ Trigger → Fetch all channels (public + private)
               → Auto-join public channels (Bot)
               → Save snapshot to Spreadsheet
               → Classify channels:
-                  • 95+ days inactive → Warning list + Slack notification
-                  • Warning 5+ days   → Archive + Slack notification
+                  • Inactive ≥ WARNING_THRESHOLD_DAYS → Warning list + Slack notification
+                  • Warning ≥ GRACE_PERIOD_DAYS      → Archive + Slack notification
                   • Became active     → Remove from warning list
 ```
 
@@ -67,7 +67,7 @@ Run `setupTrigger` in the Apps Script editor (▶). Reads the schedule from the 
 ```
 src/
 ├── index.ts            # GAS entry points (archiveInactiveChannels, setupTrigger, initSpreadsheet)
-├── config.ts           # Types, interfaces & default constants
+├── config.ts           # Types, interfaces & default constants (WARNING=95d, GRACE=5d)
 ├── channel-service.ts  # Channel classification logic (pure functions)
 ├── notifier.ts         # Slack notification message builder (pure functions)
 ├── slack-client.ts     # Slack API wrapper (stateless, token passed as argument)
