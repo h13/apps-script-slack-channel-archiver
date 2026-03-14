@@ -22,6 +22,23 @@ function getNotifyChannelId(): string {
   return id;
 }
 
+function setupDailyTrigger(): void {
+  const triggers = ScriptApp.getProjectTriggers();
+  for (const trigger of triggers) {
+    if (trigger.getHandlerFunction() === "archiveInactiveChannels") {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  }
+
+  ScriptApp.newTrigger("archiveInactiveChannels")
+    .timeBased()
+    .everyDays(1)
+    .atHour(9)
+    .create();
+
+  Logger.log("Daily trigger created: archiveInactiveChannels at 9:00-10:00");
+}
+
 function initSpreadsheet(): void {
   const id =
     PropertiesService.getScriptProperties().getProperty("SPREADSHEET_ID");
