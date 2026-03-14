@@ -65,9 +65,16 @@ Apps Script エディタ: プロジェクトの設定（歯車アイコン）→
 
 Apps Script エディタで `initSpreadsheet` を選択して ▶ 実行。必要なシート（`channels`, `archive_warnings`, `exclude_channels`）とヘッダーが自動作成される。初回は OAuth 承認が必要。
 
-### 4. 日次トリガーの設定
+### 4. トリガーの設定
 
-Apps Script エディタで `setupDailyTrigger` を選択して ▶ 実行。毎日 9:00〜10:00 に `archiveInactiveChannels` を自動実行するトリガーが作成される。初回は `script.scriptapp` スコープの承認が必要。
+Script Properties でスケジュールを設定（任意）:
+
+| プロパティ | 値 | デフォルト |
+|------------|------|-----------|
+| `TRIGGER_INTERVAL` | `hourly`, `daily`, `weekly` | `daily` |
+| `TRIGGER_HOUR` | `0`〜`23` | `9` |
+
+Apps Script エディタで `setupTrigger` を選択して ▶ 実行。初回は `script.scriptapp` スコープの承認が必要。
 
 ## 開発
 

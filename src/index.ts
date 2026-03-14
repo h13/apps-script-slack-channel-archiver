@@ -22,7 +22,11 @@ function getNotifyChannelId(): string {
   return id;
 }
 
-function setupDailyTrigger(): void {
+function setupTrigger(): void {
+  const props = PropertiesService.getScriptProperties();
+  const interval = props.getProperty("TRIGGER_INTERVAL") ?? "daily";
+  const hour = Number(props.getProperty("TRIGGER_HOUR") ?? "9");
+
   const triggers = ScriptApp.getProjectTriggers();
   for (const trigger of triggers) {
     if (trigger.getHandlerFunction() === "archiveInactiveChannels") {
@@ -30,13 +34,25 @@ function setupDailyTrigger(): void {
     }
   }
 
-  ScriptApp.newTrigger("archiveInactiveChannels")
+  const builder = ScriptApp.newTrigger("archiveInactiveChannels")
     .timeBased()
-    .everyDays(1)
-    .atHour(9)
-    .create();
+    .atHour(hour);
 
-  Logger.log("Daily trigger created: archiveInactiveChannels at 9:00-10:00");
+  switch (interval) {
+    case "hourly":
+      builder.everyHours(1).create();
+      break;
+    case "weekly":
+      builder.everyWeeks(1).create();
+      break;
+    default:
+      builder.everyDays(1).create();
+      break;
+  }
+
+  Logger.log(
+    `Trigger created: archiveInactiveChannels (${interval} at ${hour}:00)`,
+  );
 }
 
 function initSpreadsheet(): void {
