@@ -49,18 +49,7 @@ test/
 
 ### 1. Create a Slack Bot
 
-Required scopes:
-
-| Scope | Purpose |
-|-------|---------|
-| `channels:read` | List public channels |
-| `groups:read` | List private channels |
-| `channels:history` | Read last message timestamp (public) |
-| `groups:history` | Read last message timestamp (private) |
-| `channels:join` | Auto-join public channels |
-| `channels:manage` | Archive public channels |
-| `groups:write` | Archive private channels |
-| `chat:write.public` | Post notifications |
+Go to [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** → **From an app manifest** → paste [`slack-app-manifest.yml`](slack-app-manifest.yml) → Install to Workspace.
 
 ### 2. Create a Google Spreadsheet
 

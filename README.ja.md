@@ -49,18 +49,7 @@ test/
 
 ### 1. Slack Bot の作成
 
-必要なスコープ:
-
-| スコープ | 用途 |
-|----------|------|
-| `channels:read` | public チャンネル一覧取得 |
-| `groups:read` | private チャンネル一覧取得 |
-| `channels:history` | 最終投稿日取得（public） |
-| `groups:history` | 最終投稿日取得（private） |
-| `channels:join` | public チャンネルへの自動参加 |
-| `channels:manage` | public チャンネルのアーカイブ |
-| `groups:write` | private チャンネルのアーカイブ |
-| `chat:write.public` | 通知投稿 |
+[api.slack.com/apps](https://api.slack.com/apps) → **Create New App** → **From an app manifest** → [`slack-app-manifest.yml`](slack-app-manifest.yml) を貼り付け → ワークスペースにインストール。
 
 ### 2. Google スプレッドシートの作成
 

@@ -1,0 +1,22 @@
+display_information:
+  name: Slack Channel Archiver
+  description: Auto-archive inactive Slack channels (public + private)
+  background_color: "#4A154B"
+
+oauth_config:
+  scopes:
+    bot:
+      - channels:read
+      - channels:history
+      - channels:join
+      - channels:manage
+      - groups:read
+      - groups:history
+      - groups:write
+      - chat:write
+      - chat:write.public
+
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false
