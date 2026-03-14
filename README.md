@@ -51,21 +51,23 @@ test/
 
 Go to [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** → **From an app manifest** → paste [`slack-app-manifest.yml`](slack-app-manifest.yml) → Install to Workspace.
 
-### 2. Create a Google Spreadsheet
+### 2. Configure Script Properties
 
-Add an `exclude_channels` sheet with channel names to skip (one per row, with a header row).
-
-### 3. Configure Script Properties
+In the Apps Script editor: Project Settings (gear icon) → Script Properties → add:
 
 | Property | Value |
 |----------|-------|
-| `SLACK_BOT_TOKEN` | Bot User OAuth Token (`xoxb-...`) |
-| `SPREADSHEET_ID` | Google Spreadsheet ID |
-| `NOTIFY_CHANNEL_ID` | Notification channel ID (`C01234567` format) |
+| `SLACK_BOT_TOKEN` | Bot User OAuth Token (`xoxb-...`) from Step 1 |
+| `SPREADSHEET_ID` | Google Spreadsheet ID (create a new one or use existing) |
+| `NOTIFY_CHANNEL_ID` | Slack channel ID for notifications (`C01234567` format) |
 
-### 4. Set Up a Time Trigger
+### 3. Initialize Spreadsheet
 
-In the Apps Script editor: Triggers → Add Trigger → `archiveInactiveChannels` → Time-driven → Day timer.
+Run `initSpreadsheet` in the Apps Script editor (▶). This creates the required sheets (`channels`, `archive_warnings`, `exclude_channels`) and sets up headers. First run requires OAuth authorization.
+
+### 4. Set Up Daily Trigger
+
+Run `setupDailyTrigger` in the Apps Script editor (▶). This creates a daily trigger that runs `archiveInactiveChannels` at 9:00–10:00. First run requires `script.scriptapp` scope authorization.
 
 ## Development
 

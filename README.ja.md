@@ -51,21 +51,23 @@ test/
 
 [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** → **From an app manifest** → [`slack-app-manifest.yml`](slack-app-manifest.yml) を貼り付け → ワークスペースにインストール。
 
-### 2. Google スプレッドシートの作成
+### 2. Script Properties の設定
 
-`exclude_channels` シートを作成し、除外するチャンネル名を記入（1行1チャンネル、ヘッダー行あり）。
-
-### 3. Script Properties の設定
+Apps Script エディタ: プロジェクトの設定（歯車アイコン）→ スクリプト プロパティ → 以下を追加:
 
 | プロパティ | 値 |
 |------------|------|
-| `SLACK_BOT_TOKEN` | Bot User OAuth Token (`xoxb-...`) |
-| `SPREADSHEET_ID` | Google スプレッドシートの ID |
-| `NOTIFY_CHANNEL_ID` | 通知先チャンネル ID（`C01234567` 形式） |
+| `SLACK_BOT_TOKEN` | Step 1 で取得した Bot User OAuth Token (`xoxb-...`) |
+| `SPREADSHEET_ID` | Google スプレッドシートの ID（新規作成 or 既存） |
+| `NOTIFY_CHANNEL_ID` | Slack 通知先チャンネル ID（`C01234567` 形式） |
 
-### 4. 時間トリガーの設定
+### 3. スプレッドシートの初期化
 
-Apps Script エディタ: トリガー → トリガーを追加 → `archiveInactiveChannels` → 時間主導型 → 日付ベースのタイマー。
+Apps Script エディタで `initSpreadsheet` を選択して ▶ 実行。必要なシート（`channels`, `archive_warnings`, `exclude_channels`）とヘッダーが自動作成される。初回は OAuth 承認が必要。
+
+### 4. 日次トリガーの設定
+
+Apps Script エディタで `setupDailyTrigger` を選択して ▶ 実行。毎日 9:00〜10:00 に `archiveInactiveChannels` を自動実行するトリガーが作成される。初回は `script.scriptapp` スコープの承認が必要。
 
 ## 開発
 
