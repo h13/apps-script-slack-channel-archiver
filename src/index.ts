@@ -11,7 +11,12 @@ import {
   saveWarnings,
   saveChannelSnapshot,
 } from "./sheet-store.js";
-import { DEFAULT_EXCLUDE_PATTERNS } from "./config.js";
+import {
+  DEFAULT_EXCLUDE_PATTERNS,
+  DEFAULT_WARNING_THRESHOLD_DAYS,
+  DEFAULT_GRACE_PERIOD_DAYS,
+} from "./config.js";
+import type { Thresholds } from "./config.js";
 
 function getNotifyChannelId(): string {
   const id =
@@ -83,9 +88,22 @@ function initSpreadsheet(): void {
   Logger.log("Spreadsheet initialized: " + ss.getUrl());
 }
 
+function loadThresholds(): Thresholds {
+  const props = PropertiesService.getScriptProperties();
+  const warningThresholdDays = Number(
+    props.getProperty("WARNING_THRESHOLD_DAYS") ??
+      String(DEFAULT_WARNING_THRESHOLD_DAYS),
+  );
+  const gracePeriodDays = Number(
+    props.getProperty("GRACE_PERIOD_DAYS") ?? String(DEFAULT_GRACE_PERIOD_DAYS),
+  );
+  return { warningThresholdDays, gracePeriodDays };
+}
+
 function archiveInactiveChannels(): void {
   const now = new Date();
   const notifyChannelId = getNotifyChannelId();
+  const thresholds = loadThresholds();
 
   const channels = fetchAllChannels();
   saveChannelSnapshot(channels);
@@ -96,7 +114,7 @@ function archiveInactiveChannels(): void {
   const existingWarnings = loadWarnings();
 
   const { newWarnings, archiveCandidates, remainingWarnings } =
-    classifyChannels(channels, existingWarnings, excludeNames, now);
+    classifyChannels(channels, existingWarnings, excludeNames, now, thresholds);
 
   for (const candidate of archiveCandidates) {
     archiveChannel(candidate.channelId);
@@ -105,7 +123,10 @@ function archiveInactiveChannels(): void {
   const updatedWarnings = [...remainingWarnings, ...newWarnings];
   saveWarnings(updatedWarnings);
 
-  const warningMessage = buildWarningMessage(newWarnings);
+  const warningMessage = buildWarningMessage(
+    newWarnings,
+    thresholds.gracePeriodDays,
+  );
   if (warningMessage !== "") {
     postMessage(notifyChannelId, warningMessage);
   }

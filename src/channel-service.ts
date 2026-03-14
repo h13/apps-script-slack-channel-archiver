@@ -1,5 +1,9 @@
-import { WARNING_THRESHOLD_DAYS, GRACE_PERIOD_DAYS } from "./config.js";
-import type { SlackChannel, WarningEntry, ArchiveCandidate } from "./config.js";
+import type {
+  SlackChannel,
+  WarningEntry,
+  ArchiveCandidate,
+  Thresholds,
+} from "./config.js";
 
 const MS_PER_DAY = 86_400_000;
 
@@ -26,6 +30,7 @@ export function classifyChannels(
   existingWarnings: readonly WarningEntry[],
   excludeNames: readonly string[],
   now: Date,
+  thresholds: Thresholds,
 ): ClassifyResult {
   const warningMap = new Map(existingWarnings.map((w) => [w.channelId, w]));
 
@@ -41,7 +46,7 @@ export function classifyChannels(
     const inactiveDays = calcInactiveDays(channel.lastActivityTs, now);
     const existingWarning = warningMap.get(channel.id);
 
-    if (inactiveDays < WARNING_THRESHOLD_DAYS) {
+    if (inactiveDays < thresholds.warningThresholdDays) {
       continue;
     }
 
@@ -61,7 +66,7 @@ export function classifyChannels(
       (now.getTime() - warnedAt.getTime()) / MS_PER_DAY,
     );
 
-    if (graceDaysElapsed >= GRACE_PERIOD_DAYS) {
+    if (graceDaysElapsed >= thresholds.gracePeriodDays) {
       archiveCandidates.push({
         channelId: channel.id,
         channelName: channel.name,

@@ -1,16 +1,18 @@
-import { GRACE_PERIOD_DAYS } from "./config.js";
 import type { WarningEntry, ArchiveCandidate } from "./config.js";
 
 function channelLabel(name: string, isPrivate: boolean): string {
   return isPrivate ? `\u{1F512} ${name}` : `#${name}`;
 }
 
-export function buildWarningMessage(warnings: readonly WarningEntry[]): string {
+export function buildWarningMessage(
+  warnings: readonly WarningEntry[],
+  gracePeriodDays: number,
+): string {
   if (warnings.length === 0) {
     return "";
   }
 
-  const header = `:warning: *${warnings.length}件*のチャンネルが${GRACE_PERIOD_DAYS}日後にアーカイブされます\n`;
+  const header = `:warning: *${warnings.length}件*のチャンネルが${gracePeriodDays}日後にアーカイブされます\n`;
   const lines = warnings.map(
     (w) =>
       `• ${channelLabel(w.channelName, w.isPrivate)} (${w.inactiveDays}日間非アクティブ)`,

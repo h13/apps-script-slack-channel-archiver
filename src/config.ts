@@ -1,5 +1,10 @@
-export const WARNING_THRESHOLD_DAYS = 95;
-export const GRACE_PERIOD_DAYS = 5;
+export const DEFAULT_WARNING_THRESHOLD_DAYS = 95;
+export const DEFAULT_GRACE_PERIOD_DAYS = 5;
+
+export interface Thresholds {
+  readonly warningThresholdDays: number;
+  readonly gracePeriodDays: number;
+}
 
 export const SHEET_NAMES = {
   channels: "channels",

@@ -3,7 +3,7 @@ import {
   isExcluded,
   classifyChannels,
 } from "../src/channel-service.js";
-import type { SlackChannel, WarningEntry } from "../src/config.js";
+import type { SlackChannel, WarningEntry, Thresholds } from "../src/config.js";
 
 const NOW = new Date("2026-03-14T00:00:00+09:00");
 const DAY_MS = 86_400_000;
@@ -54,6 +54,10 @@ describe("isExcluded", () => {
 
 describe("classifyChannels", () => {
   const excludeNames = ["general"];
+  const thresholds: Thresholds = {
+    warningThresholdDays: 95,
+    gracePeriodDays: 5,
+  };
 
   it("identifies warning candidates (95+ days inactive)", () => {
     const staleChannel = makeChannel({
@@ -62,7 +66,13 @@ describe("classifyChannels", () => {
       lastActivityTs: (NOW.getTime() - 96 * DAY_MS) / 1000,
     });
 
-    const result = classifyChannels([staleChannel], [], excludeNames, NOW);
+    const result = classifyChannels(
+      [staleChannel],
+      [],
+      excludeNames,
+      NOW,
+      thresholds,
+    );
 
     expect(result.newWarnings).toHaveLength(1);
     expect(result.newWarnings[0]!.channelId).toBe("C001");
@@ -76,7 +86,13 @@ describe("classifyChannels", () => {
       lastActivityTs: (NOW.getTime() - 10 * DAY_MS) / 1000,
     });
 
-    const result = classifyChannels([activeChannel], [], excludeNames, NOW);
+    const result = classifyChannels(
+      [activeChannel],
+      [],
+      excludeNames,
+      NOW,
+      thresholds,
+    );
 
     expect(result.newWarnings).toHaveLength(0);
     expect(result.archiveCandidates).toHaveLength(0);
@@ -89,7 +105,13 @@ describe("classifyChannels", () => {
       lastActivityTs: (NOW.getTime() - 200 * DAY_MS) / 1000,
     });
 
-    const result = classifyChannels([generalChannel], [], excludeNames, NOW);
+    const result = classifyChannels(
+      [generalChannel],
+      [],
+      excludeNames,
+      NOW,
+      thresholds,
+    );
 
     expect(result.newWarnings).toHaveLength(0);
     expect(result.archiveCandidates).toHaveLength(0);
@@ -115,6 +137,7 @@ describe("classifyChannels", () => {
       [existingWarning],
       excludeNames,
       NOW,
+      thresholds,
     );
 
     expect(result.archiveCandidates).toHaveLength(1);
@@ -143,6 +166,7 @@ describe("classifyChannels", () => {
       [existingWarning],
       excludeNames,
       NOW,
+      thresholds,
     );
 
     expect(result.archiveCandidates).toHaveLength(0);
@@ -169,6 +193,7 @@ describe("classifyChannels", () => {
       [existingWarning],
       excludeNames,
       NOW,
+      thresholds,
     );
 
     expect(result.newWarnings).toHaveLength(0);
@@ -182,7 +207,13 @@ describe("classifyChannels", () => {
       lastActivityTs: (NOW.getTime() - 100 * DAY_MS) / 1000,
     });
 
-    const result = classifyChannels([privateChannel], [], excludeNames, NOW);
+    const result = classifyChannels(
+      [privateChannel],
+      [],
+      excludeNames,
+      NOW,
+      thresholds,
+    );
 
     expect(result.newWarnings).toHaveLength(1);
     expect(result.newWarnings[0]!.isPrivate).toBe(true);
@@ -208,6 +239,7 @@ describe("classifyChannels", () => {
       [staleWarning],
       excludeNames,
       NOW,
+      thresholds,
     );
 
     expect(result.newWarnings).toHaveLength(0);

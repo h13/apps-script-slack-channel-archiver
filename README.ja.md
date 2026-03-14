@@ -60,6 +60,8 @@ Apps Script エディタ: プロジェクトの設定（歯車アイコン）→
 | `SLACK_BOT_TOKEN` | Step 1 で取得した Bot User OAuth Token (`xoxb-...`) |
 | `SPREADSHEET_ID` | Google スプレッドシートの ID（新規作成 or 既存） |
 | `NOTIFY_CHANNEL_ID` | Slack 通知先チャンネル ID（`C01234567` 形式） |
+| `WARNING_THRESHOLD_DAYS` | 非アクティブ警告までの日数（デフォルト: `95`） |
+| `GRACE_PERIOD_DAYS` | 警告からアーカイブまでの猶予日数（デフォルト: `5`） |
 
 ### 3. スプレッドシートの初期化
 

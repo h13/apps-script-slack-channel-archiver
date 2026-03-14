@@ -3,7 +3,7 @@ import type { WarningEntry, ArchiveCandidate } from "../src/config.js";
 
 describe("buildWarningMessage", () => {
   it("returns empty string for no warnings", () => {
-    expect(buildWarningMessage([])).toBe("");
+    expect(buildWarningMessage([], 5)).toBe("");
   });
 
   it("builds message for single public channel warning", () => {
@@ -17,7 +17,7 @@ describe("buildWarningMessage", () => {
       },
     ];
 
-    const message = buildWarningMessage(warnings);
+    const message = buildWarningMessage(warnings, 5);
 
     expect(message).toContain("old-project");
     expect(message).toContain("96");
@@ -35,7 +35,7 @@ describe("buildWarningMessage", () => {
       },
     ];
 
-    const message = buildWarningMessage(warnings);
+    const message = buildWarningMessage(warnings, 5);
 
     expect(message).toContain("\u{1F512}");
     expect(message).toContain("secret-project");
@@ -59,7 +59,7 @@ describe("buildWarningMessage", () => {
       },
     ];
 
-    const message = buildWarningMessage(warnings);
+    const message = buildWarningMessage(warnings, 5);
 
     expect(message).toContain("ch-a");
     expect(message).toContain("ch-b");

@@ -60,6 +60,8 @@ In the Apps Script editor: Project Settings (gear icon) â†’ Script Properties â†
 | `SLACK_BOT_TOKEN` | Bot User OAuth Token (`xoxb-...`) from Step 1 |
 | `SPREADSHEET_ID` | Google Spreadsheet ID (create a new one or use existing) |
 | `NOTIFY_CHANNEL_ID` | Slack channel ID for notifications (`C01234567` format) |
+| `WARNING_THRESHOLD_DAYS` | Days of inactivity before warning (default: `95`) |
+| `GRACE_PERIOD_DAYS` | Days between warning and archive (default: `5`) |
 
 ### 3. Initialize Spreadsheet
 
