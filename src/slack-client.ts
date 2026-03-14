@@ -1,22 +1,13 @@
 import type { SlackChannel } from "./config.js";
 
-let _token = "";
-
-export function setToken(token: string): void {
-  _token = token;
-}
-
 function slackApi<T>(
+  token: string,
   endpoint: string,
   params: Record<string, string> = {},
   method: "get" | "post" = "get",
 ): T {
-  if (_token === "") {
-    throw new Error("Slack token not set. Call setToken() first.");
-  }
-
   const fetchOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-    headers: { Authorization: `Bearer ${_token}` },
+    headers: { Authorization: `Bearer ${token}` },
     muteHttpExceptions: true,
   };
 
@@ -67,7 +58,7 @@ interface ConversationsHistoryResponse {
   }[];
 }
 
-export function fetchAllChannels(): readonly SlackChannel[] {
+export function fetchAllChannels(token: string): readonly SlackChannel[] {
   const allChannels: SlackChannel[] = [];
   let cursor = "";
 
@@ -82,6 +73,7 @@ export function fetchAllChannels(): readonly SlackChannel[] {
     }
 
     const response = slackApi<ConversationsListResponse>(
+      token,
       "conversations.list",
       params,
     );
@@ -92,10 +84,10 @@ export function fetchAllChannels(): readonly SlackChannel[] {
       }
 
       if (!ch.is_private) {
-        joinChannel(ch.id);
+        joinChannel(token, ch.id);
       }
 
-      const lastActivityTs = getLastActivityTs(ch.id);
+      const lastActivityTs = getLastActivityTs(token, ch.id);
 
       allChannels.push({
         id: ch.id,
@@ -114,17 +106,18 @@ export function fetchAllChannels(): readonly SlackChannel[] {
   return allChannels;
 }
 
-function joinChannel(channelId: string): void {
+function joinChannel(token: string, channelId: string): void {
   try {
-    slackApi("conversations.join", { channel: channelId }, "post");
+    slackApi(token, "conversations.join", { channel: channelId }, "post");
   } catch {
     // Already a member or cannot join — safe to ignore
   }
 }
 
-function getLastActivityTs(channelId: string): number {
+function getLastActivityTs(token: string, channelId: string): number {
   try {
     const response = slackApi<ConversationsHistoryResponse>(
+      token,
       "conversations.history",
       { channel: channelId, limit: "1" },
     );
@@ -140,10 +133,14 @@ function getLastActivityTs(channelId: string): number {
   return 0;
 }
 
-export function archiveChannel(channelId: string): void {
-  slackApi("conversations.archive", { channel: channelId }, "post");
+export function archiveChannel(token: string, channelId: string): void {
+  slackApi(token, "conversations.archive", { channel: channelId }, "post");
 }
 
-export function postMessage(channel: string, text: string): void {
-  slackApi("chat.postMessage", { channel, text }, "post");
+export function postMessage(
+  token: string,
+  channel: string,
+  text: string,
+): void {
+  slackApi(token, "chat.postMessage", { channel, text }, "post");
 }

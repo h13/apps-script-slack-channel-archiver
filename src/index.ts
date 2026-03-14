@@ -4,7 +4,6 @@ import {
   fetchAllChannels,
   archiveChannel,
   postMessage,
-  setToken,
 } from "./slack-client.js";
 import {
   loadSettings,
@@ -101,9 +100,9 @@ function initSpreadsheet(): void {
 function archiveInactiveChannels(): void {
   const now = new Date();
   const settings = loadSettings();
-  setToken(settings.slackBotToken);
+  const token = settings.slackBotToken;
 
-  const channels = fetchAllChannels();
+  const channels = fetchAllChannels(token);
   saveChannelSnapshot(channels);
 
   const sheetExcludes = loadExcludeNames();
@@ -120,7 +119,7 @@ function archiveInactiveChannels(): void {
     classifyChannels(channels, existingWarnings, excludeNames, now, thresholds);
 
   for (const candidate of archiveCandidates) {
-    archiveChannel(candidate.channelId);
+    archiveChannel(token, candidate.channelId);
   }
 
   const updatedWarnings = [...remainingWarnings, ...newWarnings];
@@ -131,11 +130,11 @@ function archiveInactiveChannels(): void {
     thresholds.gracePeriodDays,
   );
   if (warningMessage !== "") {
-    postMessage(settings.notifyChannelId, warningMessage);
+    postMessage(token, settings.notifyChannelId, warningMessage);
   }
 
   const archiveReport = buildArchiveReport(archiveCandidates);
   if (archiveReport !== "") {
-    postMessage(settings.notifyChannelId, archiveReport);
+    postMessage(token, settings.notifyChannelId, archiveReport);
   }
 }
