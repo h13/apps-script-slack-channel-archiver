@@ -4,8 +4,10 @@ import {
   fetchAllChannels,
   archiveChannel,
   postMessage,
+  setToken,
 } from "./slack-client.js";
 import {
+  loadSettings,
   loadExcludeNames,
   loadWarnings,
   saveWarnings,
@@ -15,22 +17,11 @@ import {
   DEFAULT_EXCLUDE_PATTERNS,
   DEFAULT_WARNING_THRESHOLD_DAYS,
   DEFAULT_GRACE_PERIOD_DAYS,
+  SHEET_NAMES,
 } from "./config.js";
-import type { Thresholds } from "./config.js";
-
-function getNotifyChannelId(): string {
-  const id =
-    PropertiesService.getScriptProperties().getProperty("NOTIFY_CHANNEL_ID");
-  if (id === null) {
-    throw new Error("NOTIFY_CHANNEL_ID is not set in Script Properties");
-  }
-  return id;
-}
 
 function setupTrigger(): void {
-  const props = PropertiesService.getScriptProperties();
-  const interval = props.getProperty("TRIGGER_INTERVAL") ?? "daily";
-  const hour = Number(props.getProperty("TRIGGER_HOUR") ?? "9");
+  const settings = loadSettings();
 
   const triggers = ScriptApp.getProjectTriggers();
   for (const trigger of triggers) {
@@ -41,9 +32,9 @@ function setupTrigger(): void {
 
   const builder = ScriptApp.newTrigger("archiveInactiveChannels")
     .timeBased()
-    .atHour(hour);
+    .atHour(settings.triggerHour);
 
-  switch (interval) {
+  switch (settings.triggerInterval) {
     case "hourly":
       builder.everyHours(1).create();
       break;
@@ -56,7 +47,7 @@ function setupTrigger(): void {
   }
 
   Logger.log(
-    `Trigger created: archiveInactiveChannels (${interval} at ${hour}:00)`,
+    `Trigger created: archiveInactiveChannels (${settings.triggerInterval} at ${settings.triggerHour}:00)`,
   );
 }
 
@@ -68,16 +59,35 @@ function initSpreadsheet(): void {
   }
   const ss = SpreadsheetApp.openById(id);
 
-  const sheetNames = ["channels", "archive_warnings", "exclude_channels"];
+  const sheetNames = [
+    SHEET_NAMES.channels,
+    SHEET_NAMES.warnings,
+    SHEET_NAMES.excludes,
+    SHEET_NAMES.settings,
+  ];
   for (const name of sheetNames) {
     if (ss.getSheetByName(name) === null) {
       ss.insertSheet(name);
     }
   }
 
-  const excludeSheet = ss.getSheetByName("exclude_channels")!;
+  const excludeSheet = ss.getSheetByName(SHEET_NAMES.excludes)!;
   if (excludeSheet.getLastRow() === 0) {
     excludeSheet.getRange(1, 1).setValue("channel_name");
+  }
+
+  const settingsSheet = ss.getSheetByName(SHEET_NAMES.settings)!;
+  if (settingsSheet.getLastRow() === 0) {
+    const defaults = [
+      ["key", "value"],
+      ["SLACK_BOT_TOKEN", ""],
+      ["NOTIFY_CHANNEL_ID", ""],
+      ["WARNING_THRESHOLD_DAYS", String(DEFAULT_WARNING_THRESHOLD_DAYS)],
+      ["GRACE_PERIOD_DAYS", String(DEFAULT_GRACE_PERIOD_DAYS)],
+      ["TRIGGER_INTERVAL", "daily"],
+      ["TRIGGER_HOUR", "9"],
+    ];
+    settingsSheet.getRange(1, 1, defaults.length, 2).setValues(defaults);
   }
 
   const defaultSheet = ss.getSheetByName("Sheet1");
@@ -88,22 +98,10 @@ function initSpreadsheet(): void {
   Logger.log("Spreadsheet initialized: " + ss.getUrl());
 }
 
-function loadThresholds(): Thresholds {
-  const props = PropertiesService.getScriptProperties();
-  const warningThresholdDays = Number(
-    props.getProperty("WARNING_THRESHOLD_DAYS") ??
-      String(DEFAULT_WARNING_THRESHOLD_DAYS),
-  );
-  const gracePeriodDays = Number(
-    props.getProperty("GRACE_PERIOD_DAYS") ?? String(DEFAULT_GRACE_PERIOD_DAYS),
-  );
-  return { warningThresholdDays, gracePeriodDays };
-}
-
 function archiveInactiveChannels(): void {
   const now = new Date();
-  const notifyChannelId = getNotifyChannelId();
-  const thresholds = loadThresholds();
+  const settings = loadSettings();
+  setToken(settings.slackBotToken);
 
   const channels = fetchAllChannels();
   saveChannelSnapshot(channels);
@@ -112,6 +110,11 @@ function archiveInactiveChannels(): void {
   const excludeNames = [...DEFAULT_EXCLUDE_PATTERNS, ...sheetExcludes];
 
   const existingWarnings = loadWarnings();
+
+  const thresholds = {
+    warningThresholdDays: settings.warningThresholdDays,
+    gracePeriodDays: settings.gracePeriodDays,
+  };
 
   const { newWarnings, archiveCandidates, remainingWarnings } =
     classifyChannels(channels, existingWarnings, excludeNames, now, thresholds);
@@ -128,11 +131,11 @@ function archiveInactiveChannels(): void {
     thresholds.gracePeriodDays,
   );
   if (warningMessage !== "") {
-    postMessage(notifyChannelId, warningMessage);
+    postMessage(settings.notifyChannelId, warningMessage);
   }
 
   const archiveReport = buildArchiveReport(archiveCandidates);
   if (archiveReport !== "") {
-    postMessage(notifyChannelId, archiveReport);
+    postMessage(settings.notifyChannelId, archiveReport);
   }
 }

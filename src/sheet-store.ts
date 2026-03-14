@@ -1,5 +1,9 @@
-import { SHEET_NAMES } from "./config.js";
-import type { WarningEntry } from "./config.js";
+import {
+  SHEET_NAMES,
+  DEFAULT_WARNING_THRESHOLD_DAYS,
+  DEFAULT_GRACE_PERIOD_DAYS,
+} from "./config.js";
+import type { WarningEntry, Settings } from "./config.js";
 
 function getSpreadsheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
   const id =
@@ -19,6 +23,47 @@ function getOrCreateSheet(
     return existing;
   }
   return ss.insertSheet(name);
+}
+
+export function loadSettings(): Settings {
+  const ss = getSpreadsheet();
+  const sheet = ss.getSheetByName(SHEET_NAMES.settings);
+  if (sheet === null) {
+    throw new Error("settings sheet not found. Run initSpreadsheet first.");
+  }
+
+  const data = sheet.getDataRange().getValues() as (string | number)[][];
+  const map = new Map<string, string>();
+  for (const row of data.slice(1)) {
+    const key = String(row[0] ?? "").trim();
+    const value = String(row[1] ?? "").trim();
+    if (key !== "") {
+      map.set(key, value);
+    }
+  }
+
+  const token = map.get("SLACK_BOT_TOKEN") ?? "";
+  if (token === "") {
+    throw new Error("SLACK_BOT_TOKEN is not set in settings sheet");
+  }
+
+  const channelId = map.get("NOTIFY_CHANNEL_ID") ?? "";
+  if (channelId === "") {
+    throw new Error("NOTIFY_CHANNEL_ID is not set in settings sheet");
+  }
+
+  return {
+    slackBotToken: token,
+    notifyChannelId: channelId,
+    warningThresholdDays: Number(
+      map.get("WARNING_THRESHOLD_DAYS") || DEFAULT_WARNING_THRESHOLD_DAYS,
+    ),
+    gracePeriodDays: Number(
+      map.get("GRACE_PERIOD_DAYS") || DEFAULT_GRACE_PERIOD_DAYS,
+    ),
+    triggerInterval: map.get("TRIGGER_INTERVAL") || "daily",
+    triggerHour: Number(map.get("TRIGGER_HOUR") || "9"),
+  };
 }
 
 export function loadExcludeNames(): readonly string[] {

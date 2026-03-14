@@ -53,30 +53,28 @@ Go to [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** �
 
 ### 2. Configure Script Properties
 
-In the Apps Script editor: Project Settings (gear icon) → Script Properties → add:
-
-| Property | Value |
-|----------|-------|
-| `SLACK_BOT_TOKEN` | Bot User OAuth Token (`xoxb-...`) from Step 1 |
-| `SPREADSHEET_ID` | Google Spreadsheet ID (create a new one or use existing) |
-| `NOTIFY_CHANNEL_ID` | Slack channel ID for notifications (`C01234567` format) |
-| `WARNING_THRESHOLD_DAYS` | Days of inactivity before warning (default: `95`) |
-| `GRACE_PERIOD_DAYS` | Days between warning and archive (default: `5`) |
+In the Apps Script editor: Project Settings (gear icon) → Script Properties → add `SPREADSHEET_ID` (the only property still needed here).
 
 ### 3. Initialize Spreadsheet
 
-Run `initSpreadsheet` in the Apps Script editor (▶). This creates the required sheets (`channels`, `archive_warnings`, `exclude_channels`) and sets up headers. First run requires OAuth authorization.
+Run `initSpreadsheet` in the Apps Script editor (▶). This creates the required sheets and a `settings` sheet with default values. First run requires OAuth authorization.
 
-### 4. Set Up Trigger
+### 4. Fill in Settings
 
-Add optional Script Properties to configure the schedule:
+Open the Spreadsheet → `settings` sheet → fill in:
 
-| Property | Values | Default |
-|----------|--------|---------|
-| `TRIGGER_INTERVAL` | `hourly`, `daily`, `weekly` | `daily` |
-| `TRIGGER_HOUR` | `0`–`23` | `9` |
+| key | value | required |
+|-----|-------|----------|
+| `SLACK_BOT_TOKEN` | Bot User OAuth Token (`xoxb-...`) | yes |
+| `NOTIFY_CHANNEL_ID` | Slack channel ID (`C01234567` format) | yes |
+| `WARNING_THRESHOLD_DAYS` | Days of inactivity before warning | no (default: `95`) |
+| `GRACE_PERIOD_DAYS` | Days between warning and archive | no (default: `5`) |
+| `TRIGGER_INTERVAL` | `hourly`, `daily`, `weekly` | no (default: `daily`) |
+| `TRIGGER_HOUR` | `0`–`23` | no (default: `9`) |
 
-Run `setupTrigger` in the Apps Script editor (▶). First run requires `script.scriptapp` scope authorization.
+### 5. Set Up Trigger
+
+Run `setupTrigger` in the Apps Script editor (▶). It reads the schedule from the `settings` sheet. First run requires `script.scriptapp` scope authorization.
 
 ## Development
 

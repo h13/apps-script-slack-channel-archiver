@@ -1,12 +1,9 @@
 import type { SlackChannel } from "./config.js";
 
-function getToken(): string {
-  const token =
-    PropertiesService.getScriptProperties().getProperty("SLACK_BOT_TOKEN");
-  if (token === null) {
-    throw new Error("SLACK_BOT_TOKEN is not set in Script Properties");
-  }
-  return token;
+let _token = "";
+
+export function setToken(token: string): void {
+  _token = token;
 }
 
 function slackApi<T>(
@@ -14,10 +11,12 @@ function slackApi<T>(
   params: Record<string, string> = {},
   method: "get" | "post" = "get",
 ): T {
-  const token = getToken();
+  if (_token === "") {
+    throw new Error("Slack token not set. Call setToken() first.");
+  }
 
   const fetchOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${_token}` },
     muteHttpExceptions: true,
   };
 
@@ -146,15 +145,5 @@ export function archiveChannel(channelId: string): void {
 }
 
 export function postMessage(channel: string, text: string): void {
-  const token = getToken();
-
-  UrlFetchApp.fetch("https://slack.com/api/chat.postMessage", {
-    method: "post",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    payload: JSON.stringify({ channel, text }),
-    muteHttpExceptions: true,
-  });
+  slackApi("chat.postMessage", { channel, text }, "post");
 }

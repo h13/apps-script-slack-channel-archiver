@@ -53,30 +53,28 @@ test/
 
 ### 2. Script Properties の設定
 
-Apps Script エディタ: プロジェクトの設定（歯車アイコン）→ スクリプト プロパティ → 以下を追加:
-
-| プロパティ | 値 |
-|------------|------|
-| `SLACK_BOT_TOKEN` | Step 1 で取得した Bot User OAuth Token (`xoxb-...`) |
-| `SPREADSHEET_ID` | Google スプレッドシートの ID（新規作成 or 既存） |
-| `NOTIFY_CHANNEL_ID` | Slack 通知先チャンネル ID（`C01234567` 形式） |
-| `WARNING_THRESHOLD_DAYS` | 非アクティブ警告までの日数（デフォルト: `95`） |
-| `GRACE_PERIOD_DAYS` | 警告からアーカイブまでの猶予日数（デフォルト: `5`） |
+Apps Script エディタ: プロジェクトの設定（歯車アイコン）→ スクリプト プロパティ → `SPREADSHEET_ID` を追加（ここで必要なのはこれだけ）。
 
 ### 3. スプレッドシートの初期化
 
-Apps Script エディタで `initSpreadsheet` を選択して ▶ 実行。必要なシート（`channels`, `archive_warnings`, `exclude_channels`）とヘッダーが自動作成される。初回は OAuth 承認が必要。
+Apps Script エディタで `initSpreadsheet` を選択して ▶ 実行。必要なシートと `settings` シート（デフォルト値入り）が自動作成される。初回は OAuth 承認が必要。
 
-### 4. トリガーの設定
+### 4. 設定値の入力
 
-Script Properties でスケジュールを設定（任意）:
+スプレッドシートの `settings` シートを開いて記入:
 
-| プロパティ | 値 | デフォルト |
-|------------|------|-----------|
-| `TRIGGER_INTERVAL` | `hourly`, `daily`, `weekly` | `daily` |
-| `TRIGGER_HOUR` | `0`〜`23` | `9` |
+| key | value | 必須 |
+|-----|-------|------|
+| `SLACK_BOT_TOKEN` | Bot User OAuth Token (`xoxb-...`) | はい |
+| `NOTIFY_CHANNEL_ID` | Slack 通知先チャンネル ID（`C01234567` 形式） | はい |
+| `WARNING_THRESHOLD_DAYS` | 非アクティブ警告までの日数 | いいえ（デフォルト: `95`） |
+| `GRACE_PERIOD_DAYS` | 警告からアーカイブまでの猶予日数 | いいえ（デフォルト: `5`） |
+| `TRIGGER_INTERVAL` | `hourly`, `daily`, `weekly` | いいえ（デフォルト: `daily`） |
+| `TRIGGER_HOUR` | `0`〜`23` | いいえ（デフォルト: `9`） |
 
-Apps Script エディタで `setupTrigger` を選択して ▶ 実行。初回は `script.scriptapp` スコープの承認が必要。
+### 5. トリガーの設定
+
+Apps Script エディタで `setupTrigger` を選択して ▶ 実行。`settings` シートからスケジュールを読み込む。初回は `script.scriptapp` スコープの承認が必要。
 
 ## 開発
 

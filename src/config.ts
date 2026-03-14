@@ -10,7 +10,17 @@ export const SHEET_NAMES = {
   channels: "channels",
   warnings: "archive_warnings",
   excludes: "exclude_channels",
+  settings: "settings",
 } as const;
+
+export interface Settings {
+  readonly slackBotToken: string;
+  readonly notifyChannelId: string;
+  readonly warningThresholdDays: number;
+  readonly gracePeriodDays: number;
+  readonly triggerInterval: string;
+  readonly triggerHour: number;
+}
 
 export const DEFAULT_EXCLUDE_PATTERNS: readonly string[] = [
   "general",
