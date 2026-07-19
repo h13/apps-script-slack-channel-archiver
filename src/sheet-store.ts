@@ -88,9 +88,7 @@ export function loadWarnings(): readonly WarningEntry[] {
   }
 
   const data = sheet.getDataRange().getValues() as (
-    | string
-    | number
-    | boolean
+    string | number | boolean
   )[][];
   return data.slice(1).map((row) => ({
     channelId: String(row[0] ?? ""),

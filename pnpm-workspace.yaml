@@ -1,0 +1,12 @@
+allowBuilds:
+  # unrs-resolver is a transitive dependency of jest-resolve (jest 30) that
+  # fetches its native binary via a postinstall script; required for jest to
+  # function correctly.
+  unrs-resolver: true
+overrides:
+  diff: '>=8.0.3'
+  # Pinned below the resolved "latest" to stay outside pnpm's minimumReleaseAge
+  # supply-chain window (these were published within the last day of the
+  # dependency update and failed pnpm's install-time policy check).
+  fast-uri: '3.1.2'
+  postcss: '8.5.19'
