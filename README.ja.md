@@ -26,9 +26,9 @@
 
 ## Apps Script プロジェクト
 
-| 環境 | リンク |
-|------|--------|
-| dev | [slack-channel-archiver-dev](https://script.google.com/d/1esjLNfXKGlfG6SLY1bibN6a39-cty4pKXyABycRJozDnK6JN8FXcP23o/edit) |
+| 環境 | リンク                                                                                                                    |
+| ---- | ------------------------------------------------------------------------------------------------------------------------- |
+| dev  | [slack-channel-archiver-dev](https://script.google.com/d/1esjLNfXKGlfG6SLY1bibN6a39-cty4pKXyABycRJozDnK6JN8FXcP23o/edit)  |
 | prod | [slack-channel-archiver-prod](https://script.google.com/d/19lVnm0g3_RTPd5CFsfwAkvqVGy1i3Qo3dJ3GEGdRkX4OQCZH9LAZhlcv/edit) |
 
 ## クイックスタート
@@ -49,14 +49,14 @@ Apps Script エディタで `initSpreadsheet` を選択して ▶ 実行。必�
 
 スプレッドシートの `settings` シートを開いて記入:
 
-| key | value | 必須 |
-|-----|-------|------|
-| `SLACK_BOT_TOKEN` | Bot User OAuth Token (`xoxb-...`) | はい |
-| `NOTIFY_CHANNEL_ID` | Slack 通知先チャンネル ID（`C01234567` 形式） | はい |
-| `WARNING_THRESHOLD_DAYS` | 非アクティブ警告までの日数 | いいえ（デフォルト: `95`） |
-| `GRACE_PERIOD_DAYS` | 警告からアーカイブまでの猶予日数 | いいえ（デフォルト: `5`） |
-| `TRIGGER_INTERVAL` | `hourly`, `daily`, `weekly` | いいえ（デフォルト: `daily`） |
-| `TRIGGER_HOUR` | `0`〜`23` | いいえ（デフォルト: `9`） |
+| key                      | value                                         | 必須                          |
+| ------------------------ | --------------------------------------------- | ----------------------------- |
+| `SLACK_BOT_TOKEN`        | Bot User OAuth Token (`xoxb-...`)             | はい                          |
+| `NOTIFY_CHANNEL_ID`      | Slack 通知先チャンネル ID（`C01234567` 形式） | はい                          |
+| `WARNING_THRESHOLD_DAYS` | 非アクティブ警告までの日数                    | いいえ（デフォルト: `95`）    |
+| `GRACE_PERIOD_DAYS`      | 警告からアーカイブまでの猶予日数              | いいえ（デフォルト: `5`）     |
+| `TRIGGER_INTERVAL`       | `hourly`, `daily`, `weekly`                   | いいえ（デフォルト: `daily`） |
+| `TRIGGER_HOUR`           | `0`〜`23`                                     | いいえ（デフォルト: `9`）     |
 
 ### 5. トリガーの設定
 
@@ -79,14 +79,14 @@ test/
 
 ## 開発
 
-| コマンド | 説明 |
-|---------|------|
-| `pnpm run check` | lint + typecheck + test（全チェック） |
-| `pnpm run build` | TypeScript をバンドルして `dist/` に出力 |
-| `pnpm run test` | Jest（カバレッジ付き） |
-| `pnpm run test -- --watch` | Jest ウォッチモード |
-| `pnpm run deploy` | check → build → dev にデプロイ |
-| `pnpm run deploy:prod` | check → build → 本番にデプロイ |
+| コマンド                   | 説明                                     |
+| -------------------------- | ---------------------------------------- |
+| `pnpm run check`           | lint + typecheck + test（全チェック）    |
+| `pnpm run build`           | TypeScript をバンドルして `dist/` に出力 |
+| `pnpm run test`            | Jest（カバレッジ付き）                   |
+| `pnpm run test -- --watch` | Jest ウォッチモード                      |
+| `pnpm run deploy`          | check → build → dev にデプロイ           |
+| `pnpm run deploy:prod`     | check → build → 本番にデプロイ           |
 
 ## CI/CD
 
@@ -94,13 +94,13 @@ CI は全 push と PR で実行。CD は `dev` または `main` へのマージ�
 
 ## 元記事との違い
 
-| 機能 | 元記事 | 本プロジェクト |
-|------|--------|----------------|
-| private チャンネル | 非対応 | `conversations.list` に `types=public_channel,private_channel` で対応 |
-| 自動参加 | 手動で `/invite` | Bot が `conversations.join` で public チャンネルに自動参加 |
-| 再アクティブ化検知 | 言及なし | 投稿があったチャンネルは警告リストから自動除去 |
-| 通知フォーマット | 基本的 | private チャンネルに :lock: アイコン表示 |
-| 設定管理 | ハードコード | スプレッドシート `settings` シート（コード変更不要で設定変更可） |
+| 機能               | 元記事           | 本プロジェクト                                                        |
+| ------------------ | ---------------- | --------------------------------------------------------------------- |
+| private チャンネル | 非対応           | `conversations.list` に `types=public_channel,private_channel` で対応 |
+| 自動参加           | 手動で `/invite` | Bot が `conversations.join` で public チャンネルに自動参加            |
+| 再アクティブ化検知 | 言及なし         | 投稿があったチャンネルは警告リストから自動除去                        |
+| 通知フォーマット   | 基本的           | private チャンネルに :lock: アイコン表示                              |
+| 設定管理           | ハードコード     | スプレッドシート `settings` シート（コード変更不要で設定変更可）      |
 
 ## 注意事項
 

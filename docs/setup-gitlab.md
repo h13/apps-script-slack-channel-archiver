@@ -122,7 +122,7 @@ Push to `dev` triggers dev deployment, push to `main` triggers production deploy
 | --------------- | ------------------------------------------------------ |
 | `check`         | npm registry only (for `pnpm install`)                 |
 | `deploy_*`      | `script.google.com` (HTTPS)                            |
-| `template_sync` | Template Project (internal GitLab, via Group Variable)  |
+| `template_sync` | Template Project (internal GitLab, via Group Variable) |
 
 **Template Project:**
 

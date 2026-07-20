@@ -1,4 +1,4 @@
-import type { WarningEntry, ArchiveCandidate } from "./config.js";
+import type { WarningEntry, ArchiveCandidate } from './config.js';
 
 function channelLabel(name: string, isPrivate: boolean): string {
   return isPrivate ? `\u{1F512} ${name}` : `#${name}`;
@@ -9,7 +9,7 @@ export function buildWarningMessage(
   gracePeriodDays: number,
 ): string {
   if (warnings.length === 0) {
-    return "";
+    return '';
   }
 
   const header = `:warning: *${warnings.length}件*のチャンネルが${gracePeriodDays}日後にアーカイブされます\n`;
@@ -18,14 +18,14 @@ export function buildWarningMessage(
       `• ${channelLabel(w.channelName, w.isPrivate)} (${w.inactiveDays}日間非アクティブ)`,
   );
 
-  return `${header}\n${lines.join("\n")}`;
+  return `${header}\n${lines.join('\n')}`;
 }
 
 export function buildArchiveReport(
   archived: readonly ArchiveCandidate[],
 ): string {
   if (archived.length === 0) {
-    return "";
+    return '';
   }
 
   const header = `:file_cabinet: *${archived.length}件*のチャンネルをアーカイブしました\n`;
@@ -34,5 +34,5 @@ export function buildArchiveReport(
       `• ${channelLabel(a.channelName, a.isPrivate)} (${a.inactiveDays}日間非アクティブ)`,
   );
 
-  return `${header}\n${lines.join("\n")}`;
+  return `${header}\n${lines.join('\n')}`;
 }
