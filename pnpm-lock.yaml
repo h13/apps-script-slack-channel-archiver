@@ -35,10 +35,10 @@ importers:
         specifier: 17.1.0
         version: 17.1.0
       oxfmt:
-        specifier: ^0.59.0
+        specifier: 0.59.0
         version: 0.59.0
       oxlint:
-        specifier: ^1.74.0
+        specifier: 1.74.0
         version: 1.74.0
       postcss-html:
         specifier: 1.8.1
