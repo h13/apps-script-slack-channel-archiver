@@ -1,10 +1,10 @@
-import type { SlackChannel } from "./config.js";
+import type { SlackChannel } from './config.js';
 
 function slackApi<T>(
   token: string,
   endpoint: string,
   params: Record<string, string> = {},
-  method: "get" | "post" = "get",
+  method: 'get' | 'post' = 'get',
 ): T {
   const fetchOptions: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
     headers: { Authorization: `Bearer ${token}` },
@@ -12,16 +12,16 @@ function slackApi<T>(
   };
 
   let url: string;
-  if (method === "post") {
+  if (method === 'post') {
     url = `https://slack.com/api/${endpoint}`;
-    fetchOptions.method = "post";
-    fetchOptions.contentType = "application/json";
+    fetchOptions.method = 'post';
+    fetchOptions.contentType = 'application/json';
     fetchOptions.payload = JSON.stringify(params);
   } else {
     const query = Object.entries(params)
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
-      .join("&");
-    url = `https://slack.com/api/${endpoint}${query ? `?${query}` : ""}`;
+      .join('&');
+    url = `https://slack.com/api/${endpoint}${query ? `?${query}` : ''}`;
   }
 
   const response = UrlFetchApp.fetch(url, fetchOptions);
@@ -33,7 +33,7 @@ function slackApi<T>(
 
   if (!json.ok) {
     throw new Error(
-      `Slack API error (${endpoint}): ${json.error ?? "unknown"}`,
+      `Slack API error (${endpoint}): ${json.error ?? 'unknown'}`,
     );
   }
 
@@ -60,21 +60,21 @@ interface ConversationsHistoryResponse {
 
 export function fetchAllChannels(token: string): readonly SlackChannel[] {
   const allChannels: SlackChannel[] = [];
-  let cursor = "";
+  let cursor = '';
 
   do {
     const params: Record<string, string> = {
-      types: "public_channel,private_channel",
-      exclude_archived: "true",
-      limit: "200",
+      types: 'public_channel,private_channel',
+      exclude_archived: 'true',
+      limit: '200',
     };
-    if (cursor !== "") {
-      params["cursor"] = cursor;
+    if (cursor !== '') {
+      params['cursor'] = cursor;
     }
 
     const response = slackApi<ConversationsListResponse>(
       token,
-      "conversations.list",
+      'conversations.list',
       params,
     );
 
@@ -97,18 +97,18 @@ export function fetchAllChannels(token: string): readonly SlackChannel[] {
       });
     }
 
-    cursor = response.response_metadata?.next_cursor ?? "";
-    if (cursor !== "") {
+    cursor = response.response_metadata?.next_cursor ?? '';
+    if (cursor !== '') {
       Utilities.sleep(1200);
     }
-  } while (cursor !== "");
+  } while (cursor !== '');
 
   return allChannels;
 }
 
 function joinChannel(token: string, channelId: string): void {
   try {
-    slackApi(token, "conversations.join", { channel: channelId }, "post");
+    slackApi(token, 'conversations.join', { channel: channelId }, 'post');
   } catch {
     // Already a member or cannot join — safe to ignore
   }
@@ -118,8 +118,8 @@ function getLastActivityTs(token: string, channelId: string): number {
   try {
     const response = slackApi<ConversationsHistoryResponse>(
       token,
-      "conversations.history",
-      { channel: channelId, limit: "1" },
+      'conversations.history',
+      { channel: channelId, limit: '1' },
     );
 
     const firstMessage = response.messages[0];
@@ -134,7 +134,7 @@ function getLastActivityTs(token: string, channelId: string): number {
 }
 
 export function archiveChannel(token: string, channelId: string): void {
-  slackApi(token, "conversations.archive", { channel: channelId }, "post");
+  slackApi(token, 'conversations.archive', { channel: channelId }, 'post');
 }
 
 export function postMessage(
@@ -142,5 +142,5 @@ export function postMessage(
   channel: string,
   text: string,
 ): void {
-  slackApi(token, "chat.postMessage", { channel, text }, "post");
+  slackApi(token, 'chat.postMessage', { channel, text }, 'post');
 }

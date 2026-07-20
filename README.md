@@ -26,10 +26,10 @@ Trigger → Fetch all channels (public + private)
 
 ## Apps Script Projects
 
-| Environment | Link |
-|-------------|------|
-| dev | [slack-channel-archiver-dev](https://script.google.com/d/1esjLNfXKGlfG6SLY1bibN6a39-cty4pKXyABycRJozDnK6JN8FXcP23o/edit) |
-| prod | [slack-channel-archiver-prod](https://script.google.com/d/19lVnm0g3_RTPd5CFsfwAkvqVGy1i3Qo3dJ3GEGdRkX4OQCZH9LAZhlcv/edit) |
+| Environment | Link                                                                                                                      |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- |
+| dev         | [slack-channel-archiver-dev](https://script.google.com/d/1esjLNfXKGlfG6SLY1bibN6a39-cty4pKXyABycRJozDnK6JN8FXcP23o/edit)  |
+| prod        | [slack-channel-archiver-prod](https://script.google.com/d/19lVnm0g3_RTPd5CFsfwAkvqVGy1i3Qo3dJ3GEGdRkX4OQCZH9LAZhlcv/edit) |
 
 ## Quick Start
 
@@ -49,14 +49,14 @@ Run `initSpreadsheet` in the Apps Script editor (▶). Creates the required shee
 
 Open the Spreadsheet → `settings` sheet → fill in:
 
-| key | value | required |
-|-----|-------|----------|
-| `SLACK_BOT_TOKEN` | Bot User OAuth Token (`xoxb-...`) | yes |
-| `NOTIFY_CHANNEL_ID` | Slack channel ID (`C01234567` format) | yes |
-| `WARNING_THRESHOLD_DAYS` | Days of inactivity before warning | no (default: `95`) |
-| `GRACE_PERIOD_DAYS` | Days between warning and archive | no (default: `5`) |
-| `TRIGGER_INTERVAL` | `hourly`, `daily`, `weekly` | no (default: `daily`) |
-| `TRIGGER_HOUR` | `0`–`23` | no (default: `9`) |
+| key                      | value                                 | required              |
+| ------------------------ | ------------------------------------- | --------------------- |
+| `SLACK_BOT_TOKEN`        | Bot User OAuth Token (`xoxb-...`)     | yes                   |
+| `NOTIFY_CHANNEL_ID`      | Slack channel ID (`C01234567` format) | yes                   |
+| `WARNING_THRESHOLD_DAYS` | Days of inactivity before warning     | no (default: `95`)    |
+| `GRACE_PERIOD_DAYS`      | Days between warning and archive      | no (default: `5`)     |
+| `TRIGGER_INTERVAL`       | `hourly`, `daily`, `weekly`           | no (default: `daily`) |
+| `TRIGGER_HOUR`           | `0`–`23`                              | no (default: `9`)     |
 
 ### 5. Set Up Trigger
 
@@ -79,14 +79,14 @@ test/
 
 ## Development
 
-| Command | Description |
-|---------|-------------|
-| `pnpm run check` | lint + typecheck + test (all checks) |
-| `pnpm run build` | Bundle TypeScript and output to `dist/` |
-| `pnpm run test` | Jest with coverage |
-| `pnpm run test -- --watch` | Jest watch mode |
-| `pnpm run deploy` | check → build → deploy to dev |
-| `pnpm run deploy:prod` | check → build → deploy to production |
+| Command                    | Description                             |
+| -------------------------- | --------------------------------------- |
+| `pnpm run check`           | lint + typecheck + test (all checks)    |
+| `pnpm run build`           | Bundle TypeScript and output to `dist/` |
+| `pnpm run test`            | Jest with coverage                      |
+| `pnpm run test -- --watch` | Jest watch mode                         |
+| `pnpm run deploy`          | check → build → deploy to dev           |
+| `pnpm run deploy:prod`     | check → build → deploy to production    |
 
 ## CI/CD
 
@@ -94,13 +94,13 @@ CI runs on every push and PR. CD deploys on merge to `dev` or `main` — configu
 
 ## Differences from the Original Blog Post
 
-| Feature | Original | This Project |
-|---------|----------|-------------|
-| Private channels | Not supported | Supported via `conversations.list` with `types=public_channel,private_channel` |
-| Auto-join | Manual `/invite` | Bot auto-joins public channels via `conversations.join` |
-| Reactivation | Not mentioned | Channels with new activity are removed from warning list |
-| Notification | Basic | Private channels marked with :lock: icon |
-| Configuration | Hardcoded | Spreadsheet `settings` sheet (editable without code changes) |
+| Feature          | Original         | This Project                                                                   |
+| ---------------- | ---------------- | ------------------------------------------------------------------------------ |
+| Private channels | Not supported    | Supported via `conversations.list` with `types=public_channel,private_channel` |
+| Auto-join        | Manual `/invite` | Bot auto-joins public channels via `conversations.join`                        |
+| Reactivation     | Not mentioned    | Channels with new activity are removed from warning list                       |
+| Notification     | Basic            | Private channels marked with :lock: icon                                       |
+| Configuration    | Hardcoded        | Spreadsheet `settings` sheet (editable without code changes)                   |
 
 ## Notes
 

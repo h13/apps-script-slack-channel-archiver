@@ -7,10 +7,10 @@ export interface Thresholds {
 }
 
 export const SHEET_NAMES = {
-  channels: "channels",
-  warnings: "archive_warnings",
-  excludes: "exclude_channels",
-  settings: "settings",
+  channels: 'channels',
+  warnings: 'archive_warnings',
+  excludes: 'exclude_channels',
+  settings: 'settings',
 } as const;
 
 export interface Settings {
@@ -23,8 +23,8 @@ export interface Settings {
 }
 
 export const DEFAULT_EXCLUDE_PATTERNS: readonly string[] = [
-  "general",
-  "random",
+  'general',
+  'random',
 ];
 
 export interface SlackChannel {

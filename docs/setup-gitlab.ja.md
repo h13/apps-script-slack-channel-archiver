@@ -118,16 +118,16 @@ pnpm run check    # lint + 型チェック + テスト
 
 **User Projects:**
 
-| ジョブ          | 必要な外部通信先                                          |
-| --------------- | --------------------------------------------------------- |
-| `check`         | npm レジストリのみ（`pnpm install` 用）                   |
-| `deploy_*`      | `script.google.com`（HTTPS）                              |
-| `template_sync` | Template Project（社内 GitLab、Group Variable 経由）       |
+| ジョブ          | 必要な外部通信先                                     |
+| --------------- | ---------------------------------------------------- |
+| `check`         | npm レジストリのみ（`pnpm install` 用）              |
+| `deploy_*`      | `script.google.com`（HTTPS）                         |
+| `template_sync` | Template Project（社内 GitLab、Group Variable 経由） |
 
 **Template Project:**
 
-| ジョブ          | 必要な外部通信先                                                            |
-| --------------- | --------------------------------------------------------------------------- |
+| ジョブ          | 必要な外部通信先                                                           |
+| --------------- | -------------------------------------------------------------------------- |
 | `template_sync` | `github.com`（デフォルト）または社内ミラー（`TEMPLATE_REPO_URL` 上書き時） |
 
 User Project の Runner は `github.com` への接続が不要です。外部アクセス（または社内ミラー）が必要なのは Template Project の Runner のみです。

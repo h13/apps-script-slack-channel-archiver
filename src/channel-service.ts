@@ -3,7 +3,7 @@ import type {
   WarningEntry,
   ArchiveCandidate,
   Thresholds,
-} from "./config.js";
+} from './config.js';
 
 const MS_PER_DAY = 86_400_000;
 

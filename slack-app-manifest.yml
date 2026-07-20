@@ -1,7 +1,7 @@
 display_information:
   name: Slack Channel Archiver
   description: Auto-archive inactive Slack channels (public + private)
-  background_color: "#4A154B"
+  background_color: '#4A154B'
 
 oauth_config:
   scopes:
