@@ -2,6 +2,7 @@ allowBuilds:
   # unrs-resolver is a transitive dependency of jest-resolve (jest 30) that
   # fetches its native binary via a postinstall script; required for jest to
   # function correctly.
+  '@swc/core': true
   unrs-resolver: true
 overrides:
   diff: '>=8.0.3'
