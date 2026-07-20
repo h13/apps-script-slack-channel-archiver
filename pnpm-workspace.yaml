@@ -8,5 +8,5 @@ overrides:
   # Pinned below the resolved "latest" to stay outside pnpm's minimumReleaseAge
   # supply-chain window (these were published within the last day of the
   # dependency update and failed pnpm's install-time policy check).
-  fast-uri: '3.1.2'
+  fast-uri: '4.1.1'
   postcss: '8.5.19'
