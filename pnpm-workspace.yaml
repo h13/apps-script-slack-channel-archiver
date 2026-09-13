@@ -6,6 +6,9 @@ allowBuilds:
   # requires to transform TypeScript tests.
   '@swc/core': true
   unrs-resolver: true
+  # @parcel/watcher (transitive dep via jest 30.5) installs its
+  # platform-specific native binary for filesystem watching.
+  '@parcel/watcher': true
 overrides:
   diff: '>=8.0.3'
   # Pinned below the resolved "latest" to stay outside pnpm's minimumReleaseAge
