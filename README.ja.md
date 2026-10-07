@@ -37,9 +37,16 @@
 
 [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** → **From an app manifest** → [`slack-app-manifest.yml`](slack-app-manifest.yml) を貼り付け → ワークスペースにインストール。
 
-### 2. Script Property の設定
+### 2. Script Properties の設定
 
-Apps Script エディタ: プロジェクトの設定（歯車アイコン）→ スクリプト プロパティ → `SPREADSHEET_ID` を追加。
+Apps Script エディタ: プロジェクトの設定（歯車アイコン）→ スクリプト プロパティ → 以下を追加:
+
+| key               | value                                                              |
+| ----------------- | ------------------------------------------------------------------ |
+| `SPREADSHEET_ID`  | データストアとして使うスプレッドシートの ID                       |
+| `SLACK_BOT_TOKEN` | 手順1でインストールしたアプリの Bot User OAuth Token (`xoxb-...`) |
+
+トークンはスプレッドシートではなく Script Properties に置く。スプレッドシートの閲覧者にトークンを読ませないためで、Script Properties はこの Apps Script プロジェクトの編集者にしか見えない。
 
 ### 3. スプレッドシートの初期化
 
@@ -51,7 +58,6 @@ Apps Script エディタで `initSpreadsheet` を選択して ▶ 実行。必�
 
 | key                      | value                                         | 必須                          |
 | ------------------------ | --------------------------------------------- | ----------------------------- |
-| `SLACK_BOT_TOKEN`        | Bot User OAuth Token (`xoxb-...`)             | はい                          |
 | `NOTIFY_CHANNEL_ID`      | Slack 通知先チャンネル ID（`C01234567` 形式） | はい                          |
 | `WARNING_THRESHOLD_DAYS` | 非アクティブ警告までの日数                    | いいえ（デフォルト: `95`）    |
 | `GRACE_PERIOD_DAYS`      | 警告からアーカイブまでの猶予日数              | いいえ（デフォルト: `5`）     |
@@ -102,12 +108,24 @@ CI は全 push と PR で実行。CD は `dev` または `main` へのマージ�
 | 通知フォーマット   | 基本的           | private チャンネルに :lock: アイコン表示                              |
 | 設定管理           | ハードコード     | スプレッドシート `settings` シート（コード変更不要で設定変更可）      |
 
+## private チャンネルのカバレッジ
+
+Bot が見える private チャンネルは、Bot がメンバーになっているものだけ。public チャンネルには自動参加するが、**private チャンネルには誰かが Bot を招待する必要がある**。自分が所属する全 private チャンネルへ Bot を一括招待するには、コンパニオンツール [apps-script-slack-bot-inviter](https://github.com/h13/apps-script-slack-bot-inviter) を使う。
+
+## 旧バージョンからの移行
+
+以前のバージョンは `SLACK_BOT_TOKEN` をスプレッドシートの `settings` シートに保存していた。移行手順:
+
+1. Script Properties に `SLACK_BOT_TOKEN` を追加（プロジェクトの設定 → スクリプト プロパティ）
+2. `settings` シートから `SLACK_BOT_TOKEN` の行を削除
+3. 新しいコードをデプロイ（`pnpm run deploy:prod` または `main` にマージ）
+
 ## 注意事項
 
 - `src/index.ts` の関数に `export` キーワードは付けない（GAS ランタイムは ES モジュール構文を認識できない）
 - `src/index.ts`, `src/slack-client.ts`, `src/sheet-store.ts` はテストカバレッジ対象外（GAS グローバルが Node.js で実行不可のため）
 - カバレッジ閾値: 全メトリクス 80%（`jest.config.json` で変更可）
-- `SPREADSHEET_ID` のみ Script Properties に保存。他の全設定はスプレッドシートの `settings` シートで管理
+- シークレット（`SLACK_BOT_TOKEN`）と `SPREADSHEET_ID` は Script Properties で管理。運用中に調整する設定値はコード変更なしで編集できるようスプレッドシートの `settings` シートで管理
 
 ## ライセンス
 

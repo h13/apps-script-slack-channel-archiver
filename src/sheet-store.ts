@@ -5,13 +5,16 @@ import {
 } from './config.js';
 import type { WarningEntry, Settings } from './config.js';
 
-function getSpreadsheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
-  const id =
-    PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-  if (id === null) {
-    throw new Error('SPREADSHEET_ID is not set in Script Properties');
+function getRequiredScriptProperty(key: string): string {
+  const value = PropertiesService.getScriptProperties().getProperty(key);
+  if (value === null || value.trim() === '') {
+    throw new Error(`${key} is not set in Script Properties`);
   }
-  return SpreadsheetApp.openById(id);
+  return value.trim();
+}
+
+function getSpreadsheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
+  return SpreadsheetApp.openById(getRequiredScriptProperty('SPREADSHEET_ID'));
 }
 
 function getOrCreateSheet(
@@ -42,10 +45,9 @@ export function loadSettings(): Settings {
     }
   }
 
-  const token = map.get('SLACK_BOT_TOKEN') ?? '';
-  if (token === '') {
-    throw new Error('SLACK_BOT_TOKEN is not set in settings sheet');
-  }
+  // The bot token lives in Script Properties, not in the settings sheet:
+  // anyone who can view the Spreadsheet must not be able to read the token.
+  const token = getRequiredScriptProperty('SLACK_BOT_TOKEN');
 
   const channelId = map.get('NOTIFY_CHANNEL_ID') ?? '';
   if (channelId === '') {
