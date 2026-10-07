@@ -79,7 +79,6 @@ function initSpreadsheet(): void {
   if (settingsSheet.getLastRow() === 0) {
     const defaults = [
       ['key', 'value'],
-      ['SLACK_BOT_TOKEN', ''],
       ['NOTIFY_CHANNEL_ID', ''],
       ['WARNING_THRESHOLD_DAYS', String(DEFAULT_WARNING_THRESHOLD_DAYS)],
       ['GRACE_PERIOD_DAYS', String(DEFAULT_GRACE_PERIOD_DAYS)],

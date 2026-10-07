@@ -37,9 +37,16 @@ Trigger → Fetch all channels (public + private)
 
 Go to [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** → **From an app manifest** → paste [`slack-app-manifest.yml`](slack-app-manifest.yml) → Install to Workspace.
 
-### 2. Set Script Property
+### 2. Set Script Properties
 
-In the Apps Script editor: Project Settings (gear icon) → Script Properties → add `SPREADSHEET_ID`.
+In the Apps Script editor: Project Settings (gear icon) → Script Properties → add:
+
+| key               | value                                                             |
+| ----------------- | ----------------------------------------------------------------- |
+| `SPREADSHEET_ID`  | ID of the Spreadsheet used as the data store                      |
+| `SLACK_BOT_TOKEN` | Bot User OAuth Token (`xoxb-...`) from the app installed in step 1 |
+
+The token lives in Script Properties — not in the Spreadsheet — so that people who can view the Spreadsheet cannot read it. Script Properties are only visible to editors of this Apps Script project.
 
 ### 3. Initialize Spreadsheet
 
@@ -51,7 +58,6 @@ Open the Spreadsheet → `settings` sheet → fill in:
 
 | key                      | value                                 | required              |
 | ------------------------ | ------------------------------------- | --------------------- |
-| `SLACK_BOT_TOKEN`        | Bot User OAuth Token (`xoxb-...`)     | yes                   |
 | `NOTIFY_CHANNEL_ID`      | Slack channel ID (`C01234567` format) | yes                   |
 | `WARNING_THRESHOLD_DAYS` | Days of inactivity before warning     | no (default: `95`)    |
 | `GRACE_PERIOD_DAYS`      | Days between warning and archive      | no (default: `5`)     |
@@ -102,12 +108,24 @@ CI runs on every push and PR. CD deploys on merge to `dev` or `main` — configu
 | Notification     | Basic            | Private channels marked with :lock: icon                                       |
 | Configuration    | Hardcoded        | Spreadsheet `settings` sheet (editable without code changes)                   |
 
+## Private Channel Coverage
+
+The bot can only see private channels it is a member of. It auto-joins public channels, but **someone has to invite it to each private channel**. To bulk-invite the bot to every private channel you belong to, use the companion tool [apps-script-slack-bot-inviter](https://github.com/h13/apps-script-slack-bot-inviter).
+
+## Migrating from Older Versions
+
+Earlier versions stored `SLACK_BOT_TOKEN` in the Spreadsheet `settings` sheet. To migrate:
+
+1. Add `SLACK_BOT_TOKEN` to Script Properties (Project Settings → Script Properties)
+2. Delete the `SLACK_BOT_TOKEN` row from the `settings` sheet
+3. Deploy the new code (`pnpm run deploy:prod` or merge to `main`)
+
 ## Notes
 
 - Functions in `src/index.ts` must not have the `export` keyword — the GAS runtime does not support ES module syntax
 - `src/index.ts`, `src/slack-client.ts`, `src/sheet-store.ts` are excluded from test coverage (GAS globals cannot run in Node.js)
 - Coverage threshold: 80% for all metrics (configurable in `jest.config.json`)
-- `SPREADSHEET_ID` is the only value stored in Script Properties; all other settings live in the Spreadsheet `settings` sheet
+- Secrets (`SLACK_BOT_TOKEN`) and `SPREADSHEET_ID` live in Script Properties; tunable settings live in the Spreadsheet `settings` sheet so they can be adjusted without code access
 
 ## License
 
