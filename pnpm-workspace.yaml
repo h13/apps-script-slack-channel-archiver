@@ -15,4 +15,4 @@ overrides:
   # supply-chain window (these were published within the last day of the
   # dependency update and failed pnpm's install-time policy check).
   fast-uri: '4.2.2'
-  postcss: '8.5.29'
+  postcss: '8.5.30'
