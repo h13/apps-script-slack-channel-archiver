@@ -10,7 +10,6 @@
 :!eslint.config.mjs
 :!rollup.config.mjs
 :!tsconfig.json
-:!package.json
 :!.prettierrc
 :!.htmlhintrc
 :!.stylelintrc.json
