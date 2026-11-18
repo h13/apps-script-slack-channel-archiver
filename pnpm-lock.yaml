@@ -217,8 +217,8 @@ importers:
         specifier: 1.93.0
         version: 1.93.0
       postcss-html:
-        specifier: 2.0.0
-        version: 2.0.0(postcss@8.5.33)
+        specifier: 2.0.1
+        version: 2.0.1(postcss@8.5.33)
       rimraf:
         specifier: 6.1.4
         version: 6.1.4
@@ -2980,15 +2980,9 @@ packages:
     resolution: {integrity: sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==}
     engines: {node: '>=8'}
 
-  postcss-html@2.0.0:
-    resolution: {integrity: sha512-f2Rvw5FCollEfVj3wfN7JdQb7n2rNIthW+epw2EByio7M6P7RH0BTj8a/ODHrUXd0cmO7ychb6YniymV93182Q==}
+  postcss-html@2.0.1:
+    resolution: {integrity: sha512-FqutI3u6D7j28ZgviEFjGCbId174THaVxFAMe/yd6Y/+BSQidYYh2nRCxFk8btwEV64f3TvfNz7ureGnkzqtmA==}
     engines: {node: ^22.12 || >=24}
-    peerDependencies:
-      postcss: 8.5.33
-
-  postcss-safe-parser@7.0.1:
-    resolution: {integrity: sha512-0AioNCJZ2DPYz5ABT6bddIqlhgwhpHZ/l65YAYo0BCIn0xiDpsnTHz0gnoTGk0OXZW0JRs+cDwL8u/teRdz+8A==}
-    engines: {node: '>=18.0'}
     peerDependencies:
       postcss: 8.5.33
 
@@ -6193,16 +6187,12 @@ snapshots:
     dependencies:
       find-up: 4.1.0
 
-  postcss-html@2.0.0(postcss@8.5.33):
+  postcss-html@2.0.1(postcss@8.5.33):
     dependencies:
       htmlparser2: 9.1.0
       js-tokens: 9.0.1
       postcss: 8.5.33
-      postcss-safe-parser: 7.0.1(postcss@8.5.33)
-
-  postcss-safe-parser@7.0.1(postcss@8.5.33):
-    dependencies:
-      postcss: 8.5.33
+      postcss-safe-parser: 7.1.0(postcss@8.5.33)
 
   postcss-safe-parser@7.1.0(postcss@8.5.33):
     dependencies:
