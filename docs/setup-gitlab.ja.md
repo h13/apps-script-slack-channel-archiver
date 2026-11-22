@@ -10,15 +10,32 @@
 
 ## 初回: Group の設定
 
-### 1. CLASPRC_JSON の追加
+### 1. clasp 認証情報のセットアップ（Secret Manager + WIF）
 
-CI/CD 用の専用 Google アカウント（例: `gas-deploy@yourcompany.com`）を作成し、`clasp login` を実行。`~/.clasprc.json` の内容を **Group CI/CD Variable**（名前: `CLASPRC_JSON`、masked, protected）として追加します。
+clasp の共有認証情報を Google Cloud Secret Manager に格納し、CI は Workload Identity Federation でキーレス取得します — 詳細: [secret-manager.ja.md](secret-manager.ja.md)。概要:
 
-> Group 内でこのテンプレートから作成されるすべてのプロジェクトがこの変数を共有します。プロジェクトごとの認証設定は不要です。
+1. CI/CD 用の専用 Google アカウント（例: `apps-script-deploy@yourcompany.com`）を作成し、`clasp login` を実行。`~/.clasprc.json` を secret `clasp-credentials` に格納します。
+2. WIF プール `apps-script-fleet` に `gitlab` プロバイダを作成: `--issuer-uri` と `--allowed-audiences` の両方に GitLab のベース URL を設定（CI の JWT の `aud` は `$CI_SERVER_URL`）し、group に attribute 制限。
+3. `principalSet://…/attribute.namespace_path/<group>` に `roles/secretmanager.secretAccessor` を付与。
+4. **Group CI/CD Variables** `GCP_WIF_PROVIDER` と `CLASPRC_SECRET` を設定 — **unprotected** で（protected にすると `dev` パイプラインから見えず、dev デプロイが気づかないうちに legacy モードに落ちます）。
+
+要件:
+
+- **GitLab >= 16.1**（`id_tokens: aud` の変数展開）。
+- Runner から `sts.googleapis.com` と `secretmanager.googleapis.com` への egress — **エアギャップ環境は下記の legacy フォールバックを継続してください**。
+
+> Group 内でこのテンプレートから作成されるすべてのプロジェクトが自動的に WIF で認証します。プロジェクトごとの認証設定は不要です。
+
+<details>
+<summary>Legacy / エアギャップ向けフォールバック: <code>CLASPRC_JSON</code> Group Variable</summary>
+
+`GCP_WIF_PROVIDER` 未設定時に自動的に使われます: `~/.clasprc.json` の内容を **Group CI/CD Variable**（名前: `CLASPRC_JSON`、masked, protected）として追加します。
+
+</details>
 
 ### 2. Template Project の作成
 
-upstream テンプレートを GitLab Group にインポートします。このプロジェクトが組織内の全 GAS プロジェクトのソースになります。
+upstream テンプレートを GitLab Group にインポートします。このプロジェクトが組織内の全 Apps Script プロジェクトのソースになります。
 
 **方法 A — GitHub からインポート（github.com へのネットワークアクセスが必要）:**
 
@@ -37,9 +54,11 @@ git push -u origin main
 
 > Instance レベルのテンプレートには管理者権限が必要で、GitLab.com では利用できません。すべての環境で Group テンプレートを推奨します。
 
+> **Free tier**: Group project templates は Premium 以上のプランが必要です。Free tier の場合はこの手順をスキップし、代わりに `scripts/create-gitlab-project.sh` を使用してください — 下記の[プロジェクトごと（Free Tier）](#プロジェクトごとfree-tier)を参照。
+
 ### 3. Template Project に Template Sync を設定
 
-Template Project は GitHub から同期して最新の状態を保ちます。この設定は **Template Project にのみ**行います — 個々の GAS プロジェクトには不要です。
+Template Project は GitHub から同期して最新の状態を保ちます。この設定は **Template Project にのみ**行います — 個々の Apps Script プロジェクトには不要です。
 
 1. **Project Access Token** を作成（Settings → Access Tokens、`write_repository` スコープ）
 2. CI/CD Variable として `GITLAB_PUSH_TOKEN` の名前で追加
@@ -58,11 +77,11 @@ Template Project の **project レベル** CI/CD Variable として `TEMPLATE_RE
 https://gitlab.yourcompany.com/<your-group>/apps-script-fleet.git
 ```
 
-Group 内のすべての GAS プロジェクトがこの変数を自動的に継承し、GitHub ではなく Template Project から同期するようになります。
+Group 内のすべての Apps Script プロジェクトがこの変数を自動的に継承し、GitHub ではなく Template Project から同期するようになります。
 
 > **優先順位の仕組み:** Template Project の project レベル `TEMPLATE_REPO_URL`（GitHub または社内ミラーを指す）が Group Variable より優先されます。これにより、Template Project は GitHub から同期し、User Project は Template Project から同期します。
 
-## プロジェクトごと: 新しい GAS リポジトリの作成
+## プロジェクトごと: 新しい Apps Script リポジトリの作成
 
 ### 1. プロジェクトの作成
 
@@ -76,6 +95,8 @@ cd <your-project>
 pnpm install
 ```
 
+> **Free tier**: 「Create from template」が利用できない場合は、下記の [Free Tier](#プロジェクトごとfree-tier) ワークフローを使用してください。
+
 ### 2. Script ID の設定
 
 `.clasp-dev.json` と `.clasp-prod.json` を作成（gitignore 済み）：
@@ -83,20 +104,25 @@ pnpm install
 ```json
 {
   "scriptId": "YOUR_SCRIPT_ID",
+  "projectId": "YOUR_GCP_PROJECT_ID",
   "rootDir": "dist"
 }
 ```
+
+> **`projectId`** は Apps Script に紐づく GCP プロジェクト**番号**です（`"123456789"` のような数字列。`my-project-abc` のようなプロジェクト ID ではない）。Apps Script エディタ → プロジェクトの設定 → Google Cloud Platform（GCP）プロジェクトで確認できます。記載することで GCP プロジェクトの紐づけが宣言的・再現可能になります。省略時は clasp がスクリプトの既存 GCP プロジェクトを使用します。
 
 ### 3. CI/CD Variables の設定
 
 Settings → CI/CD → Variables で以下を追加：
 
-| 変数            | Environment scope | 値                                        | オプション |
-| --------------- | ----------------- | ----------------------------------------- | ---------- |
-| `CLASP_JSON`    | `development`     | `{"scriptId":"DEV_ID","rootDir":"dist"}`  | Masked     |
-| `CLASP_JSON`    | `production`      | `{"scriptId":"PROD_ID","rootDir":"dist"}` | Masked     |
-| `DEPLOYMENT_ID` | `development`     | dev のデプロイメント ID                   |            |
-| `DEPLOYMENT_ID` | `production`      | prod のデプロイメント ID                  |            |
+| 変数            | Environment scope | 値                                                              | オプション |
+| --------------- | ----------------- | --------------------------------------------------------------- | ---------- |
+| `CLASP_JSON`    | `development`     | `{"scriptId":"DEV_ID","projectId":"GCP_NUM","rootDir":"dist"}`  | Masked     |
+| `CLASP_JSON`    | `production`      | `{"scriptId":"PROD_ID","projectId":"GCP_NUM","rootDir":"dist"}` | Masked     |
+| `DEPLOYMENT_ID` | `development`     | dev のデプロイメント ID                                         |            |
+| `DEPLOYMENT_ID` | `production`      | prod のデプロイメント ID                                        |            |
+
+> **GCP プロジェクト統合時**: `CLASP_JSON` に `"projectId":"プロジェクト番号"` を追加します（例: `{"scriptId":"...","rootDir":"dist","projectId":"123456789"}`）。`init.sh --gcp-project` 使用時は自動設定されます。
 
 ### 4. Template Sync の設定
 
@@ -121,7 +147,7 @@ pnpm run check    # lint + 型チェック + テスト
 | ジョブ          | 必要な外部通信先                                     |
 | --------------- | ---------------------------------------------------- |
 | `check`         | npm レジストリのみ（`pnpm install` 用）              |
-| `deploy_*`      | `script.google.com`（HTTPS）                         |
+| `deploy_*`      | `script.google.com`。WIF モードでは `sts.googleapis.com` + `secretmanager.googleapis.com` も必要 |
 | `template_sync` | Template Project（社内 GitLab、Group Variable 経由） |
 
 **Template Project:**
@@ -131,6 +157,58 @@ pnpm run check    # lint + 型チェック + テスト
 | `template_sync` | `github.com`（デフォルト）または社内ミラー（`TEMPLATE_REPO_URL` 上書き時） |
 
 User Project の Runner は `github.com` への接続が不要です。外部アクセス（または社内ミラー）が必要なのは Template Project の Runner のみです。
+
+## プロジェクトごと（Free Tier）
+
+GitLab Free tier では「Create from template」（Group project templates）が利用できません。代わりに `scripts/create-gitlab-project.sh` を使用してプロジェクトを作成します。
+
+### 前提条件
+
+- [glab CLI](https://gitlab.com/gitlab-org/cli) が対象 GitLab ホストに認証済み
+- apps-script-fleet テンプレートリポジトリのローカルクローン
+
+### 1. プロジェクトの作成
+
+テンプレートリポジトリのルートから実行：
+
+```bash
+./scripts/create-gitlab-project.sh --group my-org --name my-apps-script-project
+```
+
+新しい GitLab リポジトリが作成され、テンプレートファイルがコピーされ、初回コミットが push されます。
+
+オプション：
+
+| フラグ          | 説明                                  | デフォルト |
+| --------------- | ------------------------------------- | ---------- |
+| `--group`       | GitLab group または namespace（必須） |            |
+| `--name`        | リポジトリ名（必須）                  |            |
+| `--hostname`    | GitLab ホスト名                       | 自動検出   |
+| `--visibility`  | `private`、`internal`、`public`       | `private`  |
+| `--description` | プロジェクトの説明                    |            |
+
+### 2. Apps Script プロジェクトの初期化と CI/CD 設定
+
+```bash
+cd ../my-apps-script-project
+pnpm install
+./scripts/init.sh --title "My Script" [--gcp-project <NUMBER>]
+```
+
+### 3. Template Sync の設定
+
+1. **Project Access Token** を作成（Settings → Access Tokens、`write_repository` スコープ）
+2. CI/CD Variable として `GITLAB_PUSH_TOKEN` の名前で追加
+3. `TEMPLATE_REPO_URL` を CI/CD Variable として追加し、テンプレートリポジトリの git URL を指定（例: `https://gitlab.yourcompany.com/my-org/apps-script-fleet.git`）。または Group レベルで設定
+4. **Pipeline Schedule** を作成（CI/CD → Schedules）— 例: 毎週日曜
+
+### 4. 確認とデプロイ
+
+```bash
+pnpm run check    # lint + 型チェック + テスト
+```
+
+`dev` への push で dev 環境へ、`main` への push で本番環境へ自動デプロイされます。
 
 ## 既存環境からの移行
 

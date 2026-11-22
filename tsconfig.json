@@ -2,10 +2,10 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "target": "es2020",
-    "module": "es2020",
+    "module": "es2022",
     "moduleResolution": "bundler",
-    "types": ["google-apps-script", "jest"],
     "lib": ["es2020"],
+    "types": ["google-apps-script", "jest"],
     "outDir": "dist",
     "rootDir": ".",
     "strict": true,

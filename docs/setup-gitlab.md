@@ -10,15 +10,32 @@
 
 ## One-Time: Group Setup
 
-### 1. Add CLASPRC_JSON
+### 1. Set up clasp credentials (Secret Manager + WIF)
 
-Create a dedicated Google account for CI/CD (e.g., `gas-deploy@yourcompany.com`), run `clasp login`, and add the contents of `~/.clasprc.json` as a **Group CI/CD Variable** named `CLASPRC_JSON` (masked, protected).
+Store the shared clasp credentials in Google Cloud Secret Manager and let CI fetch them keylessly via Workload Identity Federation — full guide: [secret-manager.md](secret-manager.md). In short:
 
-> Every project created from this template within the group will use this variable — no per-project auth setup needed.
+1. Create a dedicated Google account for CI/CD (e.g., `apps-script-deploy@yourcompany.com`), run `clasp login`, and store `~/.clasprc.json` in the `clasp-credentials` secret.
+2. Create the WIF pool `apps-script-fleet` with a `gitlab` provider: `--issuer-uri` and `--allowed-audiences` both set to your GitLab base URL (the CI JWT's `aud` is `$CI_SERVER_URL`), attribute-restricted to your group.
+3. Grant `roles/secretmanager.secretAccessor` to `principalSet://…/attribute.namespace_path/<group>`.
+4. Set **Group CI/CD Variables** `GCP_WIF_PROVIDER` and `CLASPRC_SECRET` — **unprotected** (protected variables are invisible on `dev` pipelines, silently dropping dev deploys into legacy mode).
+
+Requirements:
+
+- **GitLab >= 16.1** (variable expansion in `id_tokens: aud`).
+- Runner egress to `sts.googleapis.com` and `secretmanager.googleapis.com` — **air-gapped instances must stay on the legacy fallback below**.
+
+> Every project created from this template within the group authenticates via WIF automatically — no per-project auth setup needed.
+
+<details>
+<summary>Legacy / air-gapped fallback: <code>CLASPRC_JSON</code> Group Variable</summary>
+
+Used automatically when `GCP_WIF_PROVIDER` is not set: add the contents of `~/.clasprc.json` as a **Group CI/CD Variable** named `CLASPRC_JSON` (masked, protected).
+
+</details>
 
 ### 2. Create the Template Project
 
-Import the upstream template into your GitLab Group. This project serves as the source for all GAS projects in your organization.
+Import the upstream template into your GitLab Group. This project serves as the source for all Apps Script projects in your organization.
 
 **Option A — Import from GitHub (requires network access to github.com):**
 
@@ -37,9 +54,11 @@ Then register it as a **[Group project template](https://docs.gitlab.com/user/gr
 
 > Instance-level templates require admin privileges and are not available on GitLab.com. Group templates are recommended for all environments.
 
+> **Free tier**: Group project templates require Premium or higher. If you are on the Free tier, skip this step and use `scripts/create-gitlab-project.sh` instead — see [Per Project (Free Tier)](#per-project-free-tier) below.
+
 ### 3. Configure Template Sync on the Template Project
 
-The Template Project syncs from GitHub to stay up to date. Configure this on the **Template Project only** — individual GAS projects do not need this.
+The Template Project syncs from GitHub to stay up to date. Configure this on the **Template Project only** — individual Apps Script projects do not need this.
 
 1. Create a **Project Access Token** (Settings → Access Tokens) with `write_repository` scope
 2. Add it as a CI/CD Variable named `GITLAB_PUSH_TOKEN`
@@ -58,11 +77,11 @@ Add `TEMPLATE_REPO_URL` as a **Group CI/CD Variable** pointing to the Template P
 https://gitlab.yourcompany.com/<your-group>/apps-script-fleet.git
 ```
 
-All GAS projects within the group inherit this variable automatically, so they sync from the Template Project instead of GitHub.
+All Apps Script projects within the group inherit this variable automatically, so they sync from the Template Project instead of GitHub.
 
 > **How precedence works:** The Template Project's project-level `TEMPLATE_REPO_URL` (pointing to GitHub or an internal mirror) takes precedence over the Group Variable. This means the Template Project syncs from GitHub, while User Projects sync from the Template Project.
 
-## Per Project: Create a New GAS Repository
+## Per Project: Create a New Apps Script Repository
 
 ### 1. Create the project
 
@@ -76,6 +95,8 @@ cd <your-project>
 pnpm install
 ```
 
+> **Free tier**: If "Create from template" is not available, use the [Free Tier](#per-project-free-tier) workflow below instead.
+
 ### 2. Set your script IDs
 
 Create `.clasp-dev.json` and `.clasp-prod.json` (gitignored):
@@ -83,20 +104,25 @@ Create `.clasp-dev.json` and `.clasp-prod.json` (gitignored):
 ```json
 {
   "scriptId": "YOUR_SCRIPT_ID",
+  "projectId": "YOUR_GCP_PROJECT_ID",
   "rootDir": "dist"
 }
 ```
+
+> **`projectId`** is the GCP project **number** associated with your Apps Script (a numeric string like `"123456789"`, not the alphanumeric project ID like `my-project-abc`). Find it in Apps Script editor → Project Settings → Google Cloud Platform (GCP) Project. Including it makes the GCP project association declarative and reproducible. If omitted, clasp uses the script's existing GCP project.
 
 ### 3. Configure CI/CD Variables
 
 Go to Settings → CI/CD → Variables and add:
 
-| Variable        | Environment scope | Value                                     | Options |
-| --------------- | ----------------- | ----------------------------------------- | ------- |
-| `CLASP_JSON`    | `development`     | `{"scriptId":"DEV_ID","rootDir":"dist"}`  | Masked  |
-| `CLASP_JSON`    | `production`      | `{"scriptId":"PROD_ID","rootDir":"dist"}` | Masked  |
-| `DEPLOYMENT_ID` | `development`     | Your dev deployment ID                    |         |
-| `DEPLOYMENT_ID` | `production`      | Your prod deployment ID                   |         |
+| Variable        | Environment scope | Value                                                           | Options |
+| --------------- | ----------------- | --------------------------------------------------------------- | ------- |
+| `CLASP_JSON`    | `development`     | `{"scriptId":"DEV_ID","projectId":"GCP_NUM","rootDir":"dist"}`  | Masked  |
+| `CLASP_JSON`    | `production`      | `{"scriptId":"PROD_ID","projectId":"GCP_NUM","rootDir":"dist"}` | Masked  |
+| `DEPLOYMENT_ID` | `development`     | Your dev deployment ID                                          |         |
+| `DEPLOYMENT_ID` | `production`      | Your prod deployment ID                                         |         |
+
+> **With GCP project**: Add `"projectId":"YOUR_PROJECT_NUMBER"` to `CLASP_JSON` (e.g., `{"scriptId":"...","rootDir":"dist","projectId":"123456789"}`). This is set automatically when using `init.sh --gcp-project`.
 
 ### 4. Set up Template Sync
 
@@ -121,7 +147,7 @@ Push to `dev` triggers dev deployment, push to `main` triggers production deploy
 | Job             | Outbound network access required                       |
 | --------------- | ------------------------------------------------------ |
 | `check`         | npm registry only (for `pnpm install`)                 |
-| `deploy_*`      | `script.google.com` (HTTPS)                            |
+| `deploy_*`      | `script.google.com`; WIF mode adds `sts.googleapis.com` + `secretmanager.googleapis.com` |
 | `template_sync` | Template Project (internal GitLab, via Group Variable) |
 
 **Template Project:**
@@ -131,6 +157,58 @@ Push to `dev` triggers dev deployment, push to `main` triggers production deploy
 | `template_sync` | `github.com` (default) or internal mirror (if `TEMPLATE_REPO_URL` overridden) |
 
 User Project runners never need to reach `github.com`. Only the Template Project's runner needs external access (or an internal mirror).
+
+## Per Project (Free Tier)
+
+On GitLab Free tier, "Create from template" (Group project templates) is not available. Use `scripts/create-gitlab-project.sh` to create projects from the template instead.
+
+### Prerequisites
+
+- [glab CLI](https://gitlab.com/gitlab-org/cli) authenticated for your GitLab host
+- A local clone of the apps-script-fleet template repository
+
+### 1. Create the project
+
+From the template repository root:
+
+```bash
+./scripts/create-gitlab-project.sh --group my-org --name my-apps-script-project
+```
+
+This creates a new GitLab repository, copies template files, and pushes the initial commit.
+
+Options:
+
+| Flag            | Description                          | Default     |
+| --------------- | ------------------------------------ | ----------- |
+| `--group`       | GitLab group or namespace (required) |             |
+| `--name`        | Repository name (required)           |             |
+| `--hostname`    | GitLab hostname                      | auto-detect |
+| `--visibility`  | `private`, `internal`, or `public`   | `private`   |
+| `--description` | Project description                  |             |
+
+### 2. Initialize Apps Script projects and CI/CD
+
+```bash
+cd ../my-apps-script-project
+pnpm install
+./scripts/init.sh --title "My Script" [--gcp-project <NUMBER>]
+```
+
+### 3. Set up Template Sync
+
+1. Create a **Project Access Token** (Settings → Access Tokens) with `write_repository` scope
+2. Add it as a CI/CD Variable named `GITLAB_PUSH_TOKEN`
+3. Add `TEMPLATE_REPO_URL` as a CI/CD Variable pointing to the template repository's git URL (e.g., `https://gitlab.yourcompany.com/my-org/apps-script-fleet.git`), or set it at the Group level for all projects
+4. Create a **Pipeline Schedule** (CI/CD → Schedules) — e.g., weekly on Sunday
+
+### 4. Verify and deploy
+
+```bash
+pnpm run check    # lint + typecheck + test
+```
+
+Push to `dev` triggers dev deployment, push to `main` triggers production deployment.
 
 ## Migration from Existing Setup
 

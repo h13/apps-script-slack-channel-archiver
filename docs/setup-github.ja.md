@@ -10,11 +10,23 @@
 
 ## 初回：Organization の設定
 
-CI/CD 用の専用 Google アカウント（例: `gas-deploy@yourcompany.com`）を作成し、`clasp login` を実行。`~/.clasprc.json` の内容を **Organization Secret**（名前: `CLASPRC_JSON`）として追加します。
+clasp の共有認証情報を Google Cloud Secret Manager に格納し、CI は Workload Identity Federation でキーレス取得します — 詳細: [secret-manager.ja.md](secret-manager.ja.md)。概要:
 
-> このテンプレートから作成されるすべてのリポジトリがこの Secret を共有します。リポごとの認証設定は不要です。
+1. CI/CD 用の専用 Google アカウント（例: `apps-script-deploy@yourcompany.com`）を作成し、`clasp login` を実行。`~/.clasprc.json` を secret `clasp-credentials` に格納します。
+2. WIF プール `apps-script-fleet` に `github` プロバイダを作成し、org に attribute 制限（`assertion.repository_owner == '<org>'` — GitHub の issuer はマルチテナントのため必須）。
+3. `principalSet://…/attribute.repository_owner/<org>` に `roles/secretmanager.secretAccessor` を付与。
+4. **Organization variables** `GCP_WIF_PROVIDER` と `CLASPRC_SECRET` を設定。
 
-## プロジェクトごと：新しい GAS リポジトリの作成
+> このテンプレートから作成されるすべてのリポジトリが自動的に WIF で認証します。リポごとの認証設定は不要です。リポ単位のハードニングが必要な場合は、IAM を `attribute.repository/<org>/<repo>` にバインドするか、deployment environment にピン留め（`sub = repo:ORG/REPO:environment:ENV`）できます。注意: CD は `workflow_run` トリガーで動くため、`ref` ベースの OIDC 条件は不安定です — `repository` / `environment` クレームを使ってください。
+
+<details>
+<summary>Legacy フォールバック: <code>CLASPRC_JSON</code> Organization Secret</summary>
+
+`GCP_WIF_PROVIDER` 未設定時に自動的に使われます: `~/.clasprc.json` の内容を **Organization Secret**（名前: `CLASPRC_JSON`）として追加します。
+
+</details>
+
+## プロジェクトごと：新しい Apps Script リポジトリの作成
 
 ### 1. テンプレートから作成
 
@@ -33,18 +45,23 @@ pnpm install
 ```json
 {
   "scriptId": "YOUR_SCRIPT_ID",
+  "projectId": "YOUR_GCP_PROJECT_ID",
   "rootDir": "dist"
 }
 ```
 
+> **`projectId`** は Apps Script に紐づく GCP プロジェクト**番号**です（`"123456789"` のような数字列。`my-project-abc` のようなプロジェクト ID ではない）。Apps Script エディタ → プロジェクトの設定 → Google Cloud Platform（GCP）プロジェクトで確認できます。記載することで GCP プロジェクトの紐づけが宣言的・再現可能になります。省略時は clasp がスクリプトの既存 GCP プロジェクトを使用します。
+
 ### 3. GitHub Environments の設定
 
-| Environment   | Secret / Variable         | 値                                        |
-| ------------- | ------------------------- | ----------------------------------------- |
-| `development` | Secret: `CLASP_JSON`      | `{"scriptId":"DEV_ID","rootDir":"dist"}`  |
-| `development` | Variable: `DEPLOYMENT_ID` | dev のデプロイメント ID                   |
-| `production`  | Secret: `CLASP_JSON`      | `{"scriptId":"PROD_ID","rootDir":"dist"}` |
-| `production`  | Variable: `DEPLOYMENT_ID` | prod のデプロイメント ID                  |
+| Environment   | Secret / Variable         | 値                                                              |
+| ------------- | ------------------------- | --------------------------------------------------------------- |
+| `development` | Secret: `CLASP_JSON`      | `{"scriptId":"DEV_ID","projectId":"GCP_NUM","rootDir":"dist"}`  |
+| `development` | Variable: `DEPLOYMENT_ID` | dev のデプロイメント ID                                         |
+| `production`  | Secret: `CLASP_JSON`      | `{"scriptId":"PROD_ID","projectId":"GCP_NUM","rootDir":"dist"}` |
+| `production`  | Variable: `DEPLOYMENT_ID` | prod のデプロイメント ID                                        |
+
+> **GCP プロジェクト統合時**: `CLASP_JSON` に `"projectId":"プロジェクト番号"` を追加します（例: `{"scriptId":"...","rootDir":"dist","projectId":"123456789"}`）。`init.sh --gcp-project` 使用時は自動設定されます。
 
 ### 4. 確認とデプロイ
 
